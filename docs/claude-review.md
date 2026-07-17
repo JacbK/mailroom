@@ -1,6 +1,13 @@
 # Claude review record
 
-Claude Opus reviewed this project three times on July 17, 2026. Claude only reviewed and did not modify, commit, push, publish, or access Gmail.
+Claude Opus reviewed this project four times on July 17, 2026. Claude only reviewed and did not modify, commit, push, publish, or access Gmail.
+
+## Unlimited-account onboarding follow-up
+
+- Setup no longer reauthenticates an unrelated account after a transient error.
+- Account flag parsing, duplicate detection, and configured-account collisions now have direct tests.
+- Non-interactive setup errors earlier, and malformed email addresses are rejected before OAuth.
+- The suggested static MCP account cap was rejected because configured aliases already bound execution and the plugin intentionally supports any number of accounts.
 
 ## Integration review
 

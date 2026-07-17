@@ -9,10 +9,6 @@ import { ConfigStore } from './storage/config-store.js';
 const program = new Command();
 const auth = new Command('auth');
 const client = new Command('client');
-const requiredAccounts = [
-  { alias: 'work', email: 'jacob@embrasure.ai' },
-  { alias: 'personal', email: 'jacobk2112@gmail.com' },
-] as const;
 
 async function confirm(question: string): Promise<boolean> {
   if (!stdin.isTTY || !stdout.isTTY) return false;
@@ -111,37 +107,31 @@ program.addCommand(auth);
 program
   .command('doctor')
   .option('--json', 'Print machine-readable JSON')
-  .description('Check Node, Keychain, OAuth, both clients, and Gmail account health.')
+  .description('Check Node, Keychain, OAuth, and every configured Gmail account.')
   .action(async (options: { json?: boolean }) => {
     const major = Number(process.versions.node.split('.')[0]);
     const authManager = new AuthManager();
     const clientConfigured = await authManager.hasClient();
     const accounts = await new GmailService().accounts();
-    const required = requiredAccounts.map((expected) => {
-      const actual = accounts.find((account) => account.alias === expected.alias);
-      return {
-        ...expected,
-        status: actual?.email.toLowerCase() === expected.email
-          ? actual.status
-          : 'missing' as const,
-      };
-    });
     const report = {
       node: { version: process.versions.node, ok: major >= 22 },
       platform: { value: process.platform, ok: process.platform === 'darwin' },
       oauth_client: { configured: clientConfigured, ok: clientConfigured },
+      account_count: accounts.length,
       accounts,
-      required_accounts: required,
       ok: major >= 22
         && process.platform === 'darwin'
         && clientConfigured
-        && required.every((account) => account.status === 'connected'),
+        && accounts.length > 0
+        && accounts.every((account) => account.status === 'connected'),
     };
     process.stdout.write(options.json ? `${JSON.stringify(report)}\n` : [
       `Node ${report.node.version}: ${report.node.ok ? 'ok' : 'needs Node 22+'}`,
       `macOS Keychain: ${report.platform.ok ? 'ok' : 'unsupported platform'}`,
       `Google OAuth client: ${clientConfigured ? 'configured' : 'missing'}`,
-      ...required.map((account) => `${account.alias} (${account.email}): ${account.status}`),
+      ...(accounts.length > 0
+        ? accounts.map((account) => `${account.alias} (${account.email}): ${account.status}`)
+        : ['Gmail accounts: none configured']),
       `Overall: ${report.ok ? 'healthy' : 'needs attention'}`,
       '',
     ].join('\n'));

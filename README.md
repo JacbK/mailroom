@@ -1,20 +1,15 @@
 # Gmail Switchboard
 
-Codex only lets me hook up one Gmail. I use two. This fixes that.
+Codex only lets me hook up one Gmail. I use more than one. This fixes that.
 
-It gives Codex and Claude one read-only Gmail MCP across:
-
-- `work` → `jacob@embrasure.ai`
-- `personal` → `jacobk2112@gmail.com`
-
-It searches both by default and keeps every message tied to the right account.
+It gives Codex and Claude one read-only Gmail MCP across as many accounts as you want. It searches all of them by default and keeps every message tied to the right inbox.
 
 ## Install it
 
 Paste this into Codex:
 
 ```text
-Install my private Gmail Switchboard plugin from https://github.com/JacbK/gmail-switchboard. Clone it to ~/Documents/Development/gmail-switchboard if needed, run ./setup, and keep going until Codex and Claude both show the MCP as connected and ./setup --doctor says work (jacob@embrasure.ai) and personal (jacobk2112@gmail.com) are healthy. Pause only when Google needs me to sign in or approve access.
+Install Gmail Switchboard from https://github.com/JacbK/gmail-switchboard. Ask me for every Gmail address I want to connect and a short alias for each one. Clone the repo, then run ./setup with one --account alias=email flag for every account. Keep going until Codex and Claude show the MCP as connected and ./setup --doctor says every configured account is healthy. Pause only when Google needs me to sign in or approve access.
 ```
 
 That is it. Start a new thread when setup finishes.
@@ -22,9 +17,9 @@ That is it. Start a new thread when setup finishes.
 Try:
 
 ```text
-Find the latest GitHub email across both accounts.
-Search only my work Gmail for AWS.
-Find personal receipts from the last month.
+Find the latest GitHub email across all my accounts.
+Search only the Gmail account I called work for AWS.
+Find receipts from the last month across every inbox.
 Show me which inbox each result came from.
 ```
 

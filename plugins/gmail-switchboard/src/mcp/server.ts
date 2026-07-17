@@ -71,7 +71,7 @@ export function createMcpServer(service = new GmailService()): McpServer {
     'Search one, several, or all configured Gmail accounts. Defaults to all accounts. Accepts Gmail search syntax and returns chronologically merged results with account-qualified message and thread IDs. Reuse next_cursor unchanged for another page. If partial is true, the page hit a safety limit and is not complete; continue with next_cursor when complete coverage matters.',
     {
       query: z.string().max(2_000).optional().describe('Normal Gmail search query, such as `from:github.com newer_than:30d`.'),
-      accounts: z.array(z.string().regex(/^[a-z][a-z0-9-]{0,31}$/)).min(1).max(20).optional()
+      accounts: z.array(z.string().regex(/^[a-z][a-z0-9-]{0,31}$/)).min(1).optional()
         .describe('Account aliases to search. Omit to search every configured account.'),
       after: z.string().optional().describe('Optional inclusive lower date boundary in YYYY-MM-DD format.'),
       before: z.string().optional().describe('Optional exclusive upper date boundary in YYYY-MM-DD format.'),
@@ -87,7 +87,7 @@ export function createMcpServer(service = new GmailService()): McpServer {
     'Read a Gmail message',
     'Read one message using the exact account-qualified message ID returned by gmail_search. Returns cleaned text without loading remote images or links.',
     {
-      message_id: z.string().min(3).max(256).describe('Required account-qualified ID, for example `work:18abc...`.'),
+      message_id: z.string().min(3).max(256).describe('Required account-qualified ID, for example `primary:18abc...`.'),
     },
     async (input) => await service.getMessage(input.message_id),
   );
@@ -98,7 +98,7 @@ export function createMcpServer(service = new GmailService()): McpServer {
     'Read a Gmail thread',
     'Read a full Gmail thread in chronological order using the exact account-qualified thread ID returned by gmail_search or gmail_get_message. The account alias is never inferred.',
     {
-      thread_id: z.string().min(3).max(256).describe('Required account-qualified ID, for example `personal:18abc...`.'),
+      thread_id: z.string().min(3).max(256).describe('Required account-qualified ID, for example `archive:18abc...`.'),
     },
     async (input) => await service.getThread(input.thread_id),
   );

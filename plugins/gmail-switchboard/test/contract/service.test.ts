@@ -15,18 +15,18 @@ let service: GmailService;
 beforeEach(async () => {
   const directory = await mkdtemp(join(tmpdir(), 'gmail-switchboard-service-'));
   config = new ConfigStore(join(directory, 'accounts.json'));
-  await config.upsert({ alias: 'work', email: 'jacob@embrasure.ai' });
-  await config.upsert({ alias: 'personal', email: 'jacobk2112@gmail.com' });
+  await config.upsert({ alias: 'work', email: 'work@example.com' });
+  await config.upsert({ alias: 'personal', email: 'personal@example.com' });
   work = new FakeGateway([
     message({ id: 'w1', threadId: 'wt', date: '2026-07-10T12:00:00Z', subject: 'Work one' }),
     message({ id: 'w2', date: '2026-07-08T12:00:00Z', subject: 'Work two' }),
     message({ id: 'w3', date: '2026-07-06T12:00:00Z', subject: 'Work three' }),
-  ], 2, 'jacob@embrasure.ai');
+  ], 2, 'work@example.com');
   personal = new FakeGateway([
     message({ id: 'p1', threadId: 'pt', date: '2026-07-09T12:00:00Z', subject: 'Personal one' }),
     message({ id: 'p2', date: '2026-07-07T12:00:00Z', subject: 'Personal two' }),
     message({ id: 'p3', date: '2026-07-05T12:00:00Z', subject: 'Personal three' }),
-  ], 2, 'jacobk2112@gmail.com');
+  ], 2, 'personal@example.com');
   const provider = async (alias: string) => ({
     account: await config.get(alias),
     gateway: alias === 'work' ? work : personal,
@@ -39,8 +39,8 @@ afterEach(async () => await config.clear());
 describe('GmailService contract', () => {
   it('reports both verified account identities', async () => {
     expect(await service.accounts()).toEqual([
-      { alias: 'personal', email: 'jacobk2112@gmail.com', status: 'connected' },
-      { alias: 'work', email: 'jacob@embrasure.ai', status: 'connected' },
+      { alias: 'personal', email: 'personal@example.com', status: 'connected' },
+      { alias: 'work', email: 'work@example.com', status: 'connected' },
     ]);
   });
 
@@ -52,8 +52,8 @@ describe('GmailService contract', () => {
     service = new GmailService(config, undefined, provider);
 
     expect(await service.accounts()).toEqual([
-      { alias: 'personal', email: 'jacobk2112@gmail.com', status: 'connected' },
-      { alias: 'work', email: 'jacob@embrasure.ai', status: 'error' },
+      { alias: 'personal', email: 'personal@example.com', status: 'connected' },
+      { alias: 'work', email: 'work@example.com', status: 'error' },
     ]);
   });
 
@@ -68,6 +68,22 @@ describe('GmailService contract', () => {
     expect(page.searched_accounts.map((item) => item.alias).sort()).toEqual(['personal', 'work']);
     expect(work.queries[0]).toBe('from:github.com after:2026/07/01 before:2026/08/01');
     expect(page.next_cursor).toMatch(/[0-9a-f-]{36}/);
+  });
+
+  it('includes newly configured accounts without changing the service', async () => {
+    await config.upsert({ alias: 'archive', email: 'archive@example.com' });
+    const archive = new FakeGateway([
+      message({ id: 'a1', date: '2026-07-11T12:00:00Z', subject: 'Archive one' }),
+    ], 2, 'archive@example.com');
+    const provider = async (alias: string) => ({
+      account: await config.get(alias),
+      gateway: alias === 'work' ? work : alias === 'personal' ? personal : archive,
+    });
+    service = new GmailService(config, undefined, provider);
+
+    const page = await service.search({ limit: 3 });
+    expect(page.results.map((item) => item.message_id)).toEqual(['archive:a1', 'work:w1', 'personal:p1']);
+    expect(page.searched_accounts.map((item) => item.alias).sort()).toEqual(['archive', 'personal', 'work']);
   });
 
   it('continues pagination without losing buffered cross-account results', async () => {
@@ -88,12 +104,12 @@ describe('GmailService contract', () => {
     work = new FakeGateway([
       message({ id: 'w-new', date: '2026-07-10T00:00:00Z' }),
       message({ id: 'w-old', date: '2026-07-01T00:00:00Z' }),
-    ], 2, 'jacob@embrasure.ai');
+    ], 2, 'work@example.com');
     personal = new FakeGateway([
       message({ id: 'p-new', date: '2026-07-09T00:00:00Z' }),
       message({ id: 'p-middle', date: '2026-07-08T00:00:00Z' }),
       message({ id: 'p-next-page', date: '2026-07-07T00:00:00Z' }),
-    ], 2, 'jacobk2112@gmail.com');
+    ], 2, 'personal@example.com');
     const provider = async (alias: string) => ({
       account: await config.get(alias),
       gateway: alias === 'work' ? work : personal,
@@ -113,10 +129,10 @@ describe('GmailService contract', () => {
   it('preserves duplicate raw Gmail IDs from different accounts', async () => {
     work = new FakeGateway([
       message({ id: 'same', date: '2026-07-10T00:00:00Z' }),
-    ], 2, 'jacob@embrasure.ai');
+    ], 2, 'work@example.com');
     personal = new FakeGateway([
       message({ id: 'same', date: '2026-07-09T00:00:00Z' }),
-    ], 2, 'jacobk2112@gmail.com');
+    ], 2, 'personal@example.com');
     const provider = async (alias: string) => ({
       account: await config.get(alias),
       gateway: alias === 'work' ? work : personal,
@@ -128,8 +144,8 @@ describe('GmailService contract', () => {
   });
 
   it('returns an explicit empty page only when the Gmail search is truly empty', async () => {
-    work = new FakeGateway([], 2, 'jacob@embrasure.ai');
-    personal = new FakeGateway([], 2, 'jacobk2112@gmail.com');
+    work = new FakeGateway([], 2, 'work@example.com');
+    personal = new FakeGateway([], 2, 'personal@example.com');
     const provider = async (alias: string) => ({
       account: await config.get(alias),
       gateway: alias === 'work' ? work : personal,
@@ -145,7 +161,7 @@ describe('GmailService contract', () => {
 
   it('returns an explicit partial page when duplicate Gmail pages exhaust the per-call budget', async () => {
     const repeated = message({ id: 'repeated', date: '2026-07-10T00:00:00Z' });
-    work = new FakeGateway([repeated], 1, 'jacob@embrasure.ai');
+    work = new FakeGateway([repeated], 1, 'work@example.com');
     work.listMessages = async () => ({
       messages: [{ id: 'repeated' }],
       nextPageToken: 'next',
@@ -165,14 +181,14 @@ describe('GmailService contract', () => {
 
   it('does not emit older buffered results when a partial page cannot prove global order', async () => {
     const workMessage = message({ id: 'work-new', date: '2026-07-10T00:00:00Z' });
-    work = new FakeGateway([workMessage], 1, 'jacob@embrasure.ai');
+    work = new FakeGateway([workMessage], 1, 'work@example.com');
     work.listMessages = async () => ({
       messages: [{ id: 'work-new' }],
       nextPageToken: 'next',
     });
     personal = new FakeGateway([
       message({ id: 'personal-buffered', date: '2026-07-09T00:00:00Z' }),
-    ], 1, 'jacobk2112@gmail.com');
+    ], 1, 'personal@example.com');
     const provider = async (alias: string) => ({
       account: await config.get(alias),
       gateway: alias === 'work' ? work : personal,
@@ -191,7 +207,7 @@ describe('GmailService contract', () => {
     work = new FakeGateway([
       message({ id: 'concurrent-1', date: '2026-07-10T00:00:00Z' }),
       message({ id: 'concurrent-2', date: '2026-07-09T00:00:00Z' }),
-    ], 1, 'jacob@embrasure.ai');
+    ], 1, 'work@example.com');
     const provider = async (alias: string) => ({ account: await config.get(alias), gateway: work });
     service = new GmailService(config, undefined, provider);
     const first = await service.search({ accounts: ['work'], limit: 1 });
@@ -219,7 +235,7 @@ describe('GmailService contract', () => {
   });
 
   it('keeps an actively used cursor when the LRU reaches capacity', async () => {
-    work = new FakeGateway([], 1, 'jacob@embrasure.ai');
+    work = new FakeGateway([], 1, 'work@example.com');
     work.listMessages = async (_query, _maxResults, pageToken) => {
       const offset = Number(pageToken ?? 0);
       return { messages: [{ id: `cursor-${offset}` }], nextPageToken: String(offset + 1) };
@@ -264,7 +280,7 @@ describe('GmailService contract', () => {
   it('opens messages and threads only through account-qualified IDs', async () => {
     await expect(service.getMessage('w1')).rejects.toMatchObject({ code: 'AMBIGUOUS_ID' });
     const view = await service.getMessage('work:w1');
-    expect(view.account_email).toBe('jacob@embrasure.ai');
+    expect(view.account_email).toBe('work@example.com');
     const thread = await service.getThread('work:wt');
     expect(thread.account_alias).toBe('work');
     expect(thread.messages[0]?.message_id).toBe('work:w1');
@@ -276,7 +292,7 @@ describe('GmailService contract', () => {
       threadId: 'large-thread',
       date: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
     }));
-    work = new FakeGateway(messages, 25, 'jacob@embrasure.ai');
+    work = new FakeGateway(messages, 25, 'work@example.com');
     const provider = async (alias: string) => ({ account: await config.get(alias), gateway: work });
     service = new GmailService(config, undefined, provider);
 
@@ -357,7 +373,7 @@ describe('GmailService contract', () => {
       id: 'malformed',
       internalDate: String(Date.now()),
       payload: { headers: [] },
-    }], 2, 'jacob@embrasure.ai');
+    }], 2, 'work@example.com');
     const provider = async (alias: string) => ({ account: await config.get(alias), gateway: work });
     service = new GmailService(config, undefined, provider);
 

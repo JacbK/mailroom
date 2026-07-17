@@ -20,7 +20,7 @@ export function parseQualifiedId(value: string): { alias: string; gmailId: strin
     throw new SwitchboardError(
       'AMBIGUOUS_ID',
       `"${value}" is not account-qualified.`,
-      'Use an ID such as `work:<id>` or `personal:<id>` from a search result.',
+      'Use an ID such as `primary:<id>` from a search result.',
     );
   }
   const alias = value.slice(0, separator);

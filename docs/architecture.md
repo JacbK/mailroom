@@ -16,7 +16,7 @@ The setup command builds before installing. Generated output is not committed.
 
 Non-secret account metadata lives in a mode `0600` config file under the user's application-support directory. The Google OAuth client and per-account refresh tokens live in macOS Keychain under the `gmail-switchboard` service.
 
-Each account has a short alias. IDs cross the MCP boundary as `<alias>:<gmail-id>`. Raw Gmail IDs are rejected because the same-looking ID cannot safely identify an account.
+Each account has a short alias, and there is no fixed account limit. IDs cross the MCP boundary as `<alias>:<gmail-id>`. Raw Gmail IDs are rejected because the same-looking ID cannot safely identify an account.
 
 ## Search and pagination
 

@@ -3,7 +3,7 @@ import { SERVER_INSTRUCTIONS } from '../../src/mcp/server.js';
 import { toMessageView } from '../../src/gmail/parser.js';
 import { message } from '../helpers.js';
 
-const account = { alias: 'work', email: 'jacob@embrasure.ai' };
+const account = { alias: 'work', email: 'work@example.com' };
 
 describe('Gmail MIME parsing', () => {
   it('returns clean plain text and account-qualified IDs', () => {
@@ -18,7 +18,7 @@ describe('Gmail MIME parsing', () => {
     expect(view.thread_id).toBe('work:t1');
     expect(view.body_text).toBe('Hello from Gmail');
     expect(view.to).toHaveLength(2);
-    expect(view.gmail_url).toContain('jacob%40embrasure.ai');
+    expect(view.gmail_url).toContain('work%40example.com');
   });
 
   it('converts HTML without loading images or retaining tracking URLs', () => {

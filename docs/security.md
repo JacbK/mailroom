@@ -32,6 +32,6 @@ Google classifies `gmail.readonly` as a restricted scope because it can read mes
 
 ## Removal
 
-`./setup --uninstall` removes both plugins and offers to revoke Google access and delete Keychain credentials. Individual accounts can be removed with `./gmail-switchboard auth remove <alias>`.
+`./setup --uninstall` removes the Codex and Claude plugins and offers to revoke Google access and delete every Keychain credential. Individual accounts can be removed with `./gmail-switchboard auth remove <alias>`.
 
 The Google OAuth JSON exists in plaintext only between the browser download and the Keychain import. Do not copy it elsewhere, and empty Trash if you manually move a copy there.

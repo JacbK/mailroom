@@ -20,8 +20,8 @@ async function store(): Promise<ConfigStore> {
 describe('ConfigStore', () => {
   it('stores only aliases and normalized emails with private permissions', async () => {
     const config = await store();
-    await config.upsert({ alias: 'work', email: 'Jacob@Embrasure.ai' });
-    expect(await config.list()).toEqual([{ alias: 'work', email: 'jacob@embrasure.ai' }]);
+    await config.upsert({ alias: 'work', email: 'Work@Example.com' });
+    expect(await config.list()).toEqual([{ alias: 'work', email: 'work@example.com' }]);
     expect((await stat(config.path)).mode & 0o777).toBe(0o600);
     expect(await readFile(config.path, 'utf8')).not.toContain('token');
   });
@@ -30,6 +30,14 @@ describe('ConfigStore', () => {
     const config = await store();
     await config.upsert({ alias: 'work', email: 'jacob@example.com' });
     await expect(config.upsert({ alias: 'other', email: 'jacob@example.com' })).rejects.toThrow();
+  });
+
+  it('does not impose a fixed account limit', async () => {
+    const config = await store();
+    for (let index = 0; index < 50; index += 1) {
+      await config.upsert({ alias: `account-${index}`, email: `user-${index}@example.com` });
+    }
+    expect(await config.list()).toHaveLength(50);
   });
 
   it('removes accounts idempotently', async () => {

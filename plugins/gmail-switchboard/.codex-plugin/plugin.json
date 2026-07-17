@@ -1,6 +1,6 @@
 {
   "name": "gmail-switchboard",
-  "version": "0.1.0+codex.20260717190313",
+  "version": "0.1.0+codex.20260717193040",
   "description": "Search and read multiple Gmail accounts without mixing up inboxes or thread IDs.",
   "author": {
     "name": "Jacob Kieser"
@@ -16,8 +16,8 @@
       "Read"
     ],
     "defaultPrompt": [
-      "Find the latest email from GitHub across both of my accounts.",
-      "Search only my work Gmail for the latest AWS email.",
+      "Find the latest email from GitHub across all my accounts.",
+      "Search one of my Gmail accounts by its alias.",
       "Show me which inbox each result came from."
     ]
   },

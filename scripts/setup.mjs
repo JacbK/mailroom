@@ -3,12 +3,30 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  assertAccountRequestAvailable,
+  parseAccountSpec,
+  requestedAccounts,
+} from './setup-accounts.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = resolve(root, 'plugins/gmail-switchboard/dist/cli.js');
 const marketplace = 'gmail-switchboard-local';
 const plugin = `gmail-switchboard@${marketplace}`;
-const args = new Set(process.argv.slice(2));
+const rawArgs = process.argv.slice(2);
+const args = new Set(rawArgs);
+
+function printUsage() {
+  process.stdout.write(`Gmail Switchboard setup
+
+  ./setup --account work=you@company.com --account personal=you@gmail.com
+  ./setup --reauth
+  ./setup --doctor
+  ./setup --uninstall
+
+Repeat --account as many times as you need.
+`);
+}
 
 function run(command, commandArgs, options = {}) {
   const result = spawnSync(command, commandArgs, {
@@ -98,7 +116,7 @@ async function ensureOAuthClient() {
   process.stdout.write(`
 Google requires one manual prerequisite:
 1. Open Google Cloud Console and enable the Gmail API.
-2. Configure the OAuth consent screen. If the app is in testing, add both Gmail addresses as test users.
+2. Configure the OAuth consent screen. If the app is in testing, add every Gmail address you plan to connect as a test user.
 3. Create an OAuth client with application type “Desktop app”.
 4. Download the JSON file. It will be moved into Keychain and deleted after a successful import.
 
@@ -116,18 +134,50 @@ function accountListing() {
   return listing?.accounts ?? [];
 }
 
-async function ensureAccounts(forceReauth = false) {
-  const expected = [
-    { alias: 'work', email: 'jacob@embrasure.ai' },
-    { alias: 'personal', email: 'jacobk2112@gmail.com' },
-  ];
-  for (const account of expected) {
-    const current = accountListing().find((item) => item.alias === account.alias);
-    if (!forceReauth && current?.email === account.email && current.status === 'connected') continue;
-    if (forceReauth && current) {
-      run('node', [cli, 'auth', 'reauth', account.alias]);
+async function promptForAccounts() {
+  const accounts = [];
+  while (true) {
+    const email = await ask('Gmail address (leave blank when done): ');
+    if (!email) break;
+    const alias = await ask(`Short alias for ${email}: `);
+    accounts.push(parseAccountSpec(`${alias}=${email}`));
+  }
+  return requestedAccounts(accounts.flatMap((account) => ['--account', `${account.alias}=${account.email}`]));
+}
+
+async function ensureAccounts(requested, forceReauth = false) {
+  let current = accountListing();
+  let desired = requested;
+  if (current.length === 0 && desired.length === 0) {
+    if (!stdin.isTTY || !stdout.isTTY) {
+      throw new Error('No Gmail accounts are configured. Rerun with --account alias=email, repeating the flag for every account.');
+    }
+    desired = await promptForAccounts();
+    if (desired.length === 0) {
+      throw new Error('Add at least one Gmail account. Rerun with --account alias=email, repeating the flag for every account.');
+    }
+  }
+
+  const handled = new Set();
+  for (const account of desired) {
+    const matchingAlias = assertAccountRequestAvailable(account, current);
+    if (matchingAlias) {
+      if (forceReauth || matchingAlias.status !== 'connected') {
+        run('node', [cli, 'auth', 'reauth', account.alias]);
+      }
+      matchingAlias.status = 'connected';
     } else {
       run('node', [cli, 'auth', 'add', account.alias, account.email]);
+      current.push({ ...account, status: 'connected' });
+    }
+    handled.add(account.alias);
+  }
+
+  for (const account of current) {
+    const shouldReconnect = forceReauth
+      || (desired.length === 0 && account.status === 'needs_auth');
+    if (!handled.has(account.alias) && shouldReconnect) {
+      run('node', [cli, 'auth', 'reauth', account.alias]);
     }
   }
 }
@@ -143,6 +193,11 @@ function printInstallStatus() {
 }
 
 async function main() {
+  if (args.has('--help') || args.has('-h')) {
+    printUsage();
+    return;
+  }
+
   if (args.has('--doctor')) {
     printInstallStatus();
     run('node', [cli, 'doctor']);
@@ -157,18 +212,19 @@ async function main() {
     return;
   }
 
+  const requested = requestedAccounts(rawArgs);
   installPlugins();
   await ensureOAuthClient();
-  await ensureAccounts(args.has('--reauth'));
+  await ensureAccounts(requested, args.has('--reauth'));
   run('node', [cli, 'doctor']);
   printInstallStatus();
 
   process.stdout.write(`
 Done. Start a fresh Codex or Claude Code thread and try:
 
-  Find the latest email from GitHub across both of my accounts.
-  Search only my work Gmail for the latest AWS email.
-  Search my personal Gmail for receipts from the last month.
+  Find the latest email from GitHub across all my accounts.
+  Search one Gmail account by the alias I gave it.
+  Find receipts from the last month across every inbox.
 
 Email access is read-only. Every result keeps its account alias.
 `);

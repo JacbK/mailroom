@@ -25,12 +25,12 @@ class MemorySecretStore implements SecretStore {
 
 describe('OAuth identity verification', () => {
   it('normalizes and accepts the exact expected identity', () => {
-    expect(assertExpectedIdentity('Jacob@Embrasure.ai', 'jacob@embrasure.ai'))
-      .toBe('jacob@embrasure.ai');
+    expect(assertExpectedIdentity('Work@Example.com', 'work@example.com'))
+      .toBe('work@example.com');
   });
 
   it('rejects the wrong Google account before credentials are saved', () => {
-    expect(() => assertExpectedIdentity('wrong@gmail.com', 'jacob@embrasure.ai'))
+    expect(() => assertExpectedIdentity('wrong@gmail.com', 'work@example.com'))
       .toThrow(expect.objectContaining<Partial<SwitchboardError>>({ code: 'WRONG_ACCOUNT' }));
   });
 

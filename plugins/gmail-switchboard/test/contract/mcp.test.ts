@@ -16,8 +16,8 @@ let closeServer: () => Promise<void>;
 beforeEach(async () => {
   const directory = await mkdtemp(join(tmpdir(), 'gmail-switchboard-mcp-'));
   config = new ConfigStore(join(directory, 'accounts.json'));
-  await config.upsert({ alias: 'work', email: 'jacob@embrasure.ai' });
-  const gateway = new FakeGateway([], 2, 'jacob@embrasure.ai');
+  await config.upsert({ alias: 'work', email: 'work@example.com' });
+  const gateway = new FakeGateway([], 2, 'work@example.com');
   const provider = async (alias: string) => ({ account: await config.get(alias), gateway });
   const server = createMcpServer(new GmailService(config, undefined, provider));
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -63,7 +63,7 @@ describe('MCP surface', () => {
     const response = await client.callTool({ name: 'gmail_accounts', arguments: {} });
     const serialized = JSON.stringify(response);
     expect(response.isError).not.toBe(true);
-    expect(serialized).toContain('jacob@embrasure.ai');
+    expect(serialized).toContain('work@example.com');
     expect(serialized).not.toContain('refreshToken');
     expect(serialized).not.toContain('accessToken');
   });
