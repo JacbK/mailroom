@@ -23,14 +23,14 @@ async function confirm(question: string): Promise<boolean> {
 
 program
   .name('gmail-switchboard')
-  .description('Secure local setup and diagnostics for Gmail Switchboard.')
+  .description('Gmail Switchboard setup and diagnostics.')
   .version('0.1.0');
 
 client
   .command('set')
   .argument('<path>', 'Google Desktop OAuth client JSON file')
   .option('--delete-source', 'Delete the JSON file after it is stored in Keychain.')
-  .description('Validate and store the OAuth client in macOS Keychain.')
+  .description('Store the OAuth client in Keychain.')
   .action(async (path: string, options: { deleteSource?: boolean }) => {
     await new AuthManager().importClientFile(path, options);
     process.stdout.write(options.deleteSource
@@ -41,7 +41,7 @@ client
 client
   .command('status')
   .option('--json', 'Print machine-readable JSON')
-  .description('Report whether an OAuth client is stored.')
+  .description('Check OAuth client setup.')
   .action(async (options: { json?: boolean }) => {
     const configured = await new AuthManager().hasClient();
     process.stdout.write(options.json
@@ -54,7 +54,7 @@ auth
   .command('add')
   .argument('<alias>', 'Short alias such as work or personal')
   .argument('<email>', 'Exact Google account email expected during OAuth')
-  .description('Authenticate and identity-check one Gmail account.')
+  .description('Connect one Gmail account.')
   .action(async (alias: string, email: string) => {
     await new AuthManager().authorize(alias, email);
     process.stdout.write(`Connected ${alias} as ${email.toLowerCase()}.\n`);
@@ -63,7 +63,7 @@ auth
 auth
   .command('reauth')
   .argument('<alias>', 'Configured account alias')
-  .description('Repeat OAuth for one account and verify the same identity.')
+  .description('Reconnect one account.')
   .action(async (alias: string) => {
     const account = await new ConfigStore().get(alias);
     await new AuthManager().authorize(account.alias, account.email);
@@ -73,7 +73,7 @@ auth
 auth
   .command('list')
   .option('--json', 'Print machine-readable JSON')
-  .description('List aliases, verified addresses, and connection health. Never prints credentials.')
+  .description('List accounts and status.')
   .action(async (options: { json?: boolean }) => {
     const accounts = await new GmailService().accounts();
     if (options.json) {
@@ -93,7 +93,7 @@ auth
   .command('remove')
   .argument('<alias>', 'Configured account alias')
   .option('-y, --yes', 'Skip confirmation')
-  .description('Revoke and remove one locally stored Gmail credential.')
+  .description('Revoke and remove one account.')
   .action(async (alias: string, options: { yes?: boolean }) => {
     const approved = options.yes || await confirm(`Revoke and remove the "${alias}" Gmail connection?`);
     if (!approved) throw new Error('Cancelled without changing credentials.');
@@ -107,7 +107,7 @@ program.addCommand(auth);
 program
   .command('doctor')
   .option('--json', 'Print machine-readable JSON')
-  .description('Check Node, Keychain, OAuth, and every configured Gmail account.')
+  .description('Check setup and account health.')
   .action(async (options: { json?: boolean }) => {
     const major = Number(process.versions.node.split('.')[0]);
     const authManager = new AuthManager();
@@ -142,7 +142,7 @@ program
   .command('smoke')
   .option('--account <alias>', 'Check one account alias instead of all configured accounts')
   .option('--json', 'Print machine-readable JSON')
-  .description('Run a privacy-safe real Gmail search, message read, and thread read without printing email content.')
+  .description('Test search and reads without printing email content.')
   .action(async (options: { account?: string; json?: boolean }) => {
     const service = new GmailService();
     const page = await service.search({
@@ -203,7 +203,7 @@ program
 program
   .command('purge')
   .option('-y, --yes', 'Skip confirmation')
-  .description('Revoke all Gmail access and delete all Gmail Switchboard credentials and local account config.')
+  .description('Revoke all access and delete local credentials.')
   .action(async (options: { yes?: boolean }) => {
     const approved = options.yes || await confirm('Revoke all Gmail access and delete local credentials?');
     if (!approved) throw new Error('Cancelled without changing credentials.');

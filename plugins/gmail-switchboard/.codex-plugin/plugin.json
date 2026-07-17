@@ -1,24 +1,22 @@
 {
   "name": "gmail-switchboard",
-  "version": "0.1.0+codex.20260717193040",
-  "description": "Search and read multiple Gmail accounts without mixing up inboxes or thread IDs.",
+  "version": "0.1.0+codex.20260717194402",
+  "description": "Read multiple Gmail accounts through one local MCP.",
   "author": {
     "name": "Jacob Kieser"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Gmail Switchboard",
-    "shortDescription": "Read multiple Gmail accounts safely.",
-    "longDescription": "Search and read multiple Gmail accounts through one local, read-only MCP server with account-qualified message and thread IDs.",
+    "shortDescription": "Read multiple Gmail accounts.",
+    "longDescription": "Local read-only Gmail MCP.",
     "developerName": "Jacob Kieser",
     "category": "Productivity",
     "capabilities": [
       "Read"
     ],
     "defaultPrompt": [
-      "Find the latest email from GitHub across all my accounts.",
-      "Search one of my Gmail accounts by its alias.",
-      "Show me which inbox each result came from."
+      "Search all my Gmail accounts."
     ]
   },
   "mcpServers": "./.mcp.json"

@@ -114,11 +114,12 @@ async function ensureOAuthClient() {
   if (status?.configured) return;
 
   process.stdout.write(`
-Google requires one manual prerequisite:
-1. Open Google Cloud Console and enable the Gmail API.
-2. Configure the OAuth consent screen. If the app is in testing, add every Gmail address you plan to connect as a test user.
-3. Create an OAuth client with application type “Desktop app”.
-4. Download the JSON file. It will be moved into Keychain and deleted after a successful import.
+Google setup:
+1. Enable the Gmail API.
+2. Configure OAuth consent. If testing, add each account as a test user.
+3. Create and download a Desktop OAuth client.
+
+The JSON moves to Keychain, then is deleted.
 
 `);
   open('https://console.cloud.google.com/apis/credentials');
@@ -219,15 +220,7 @@ async function main() {
   run('node', [cli, 'doctor']);
   printInstallStatus();
 
-  process.stdout.write(`
-Done. Start a fresh Codex or Claude Code thread and try:
-
-  Find the latest email from GitHub across all my accounts.
-  Search one Gmail account by the alias I gave it.
-  Find receipts from the last month across every inbox.
-
-Email access is read-only. Every result keeps its account alias.
-`);
+  process.stdout.write('\nDone. Start a new Codex or Claude Code task.\n');
 }
 
 main().catch((error) => {

@@ -3,7 +3,7 @@
   "name": "gmail-switchboard",
   "displayName": "Gmail Switchboard",
   "version": "0.1.0",
-  "description": "Search and read multiple Gmail accounts without mixing up inboxes or thread IDs.",
+  "description": "Read multiple Gmail accounts through one local MCP.",
   "author": {
     "name": "Jacob Kieser"
   },
