@@ -19,7 +19,7 @@ Google classifies `gmail.readonly` as a restricted scope because it can read mes
 | Risk | Mitigation |
 | --- | --- |
 | OAuth token theft | Refresh tokens and the OAuth client are stored in Keychain, never plaintext config. Diagnostics never serialize credential objects. |
-| Plaintext leakage | Account config contains aliases and addresses only. Secret scanning blocks common token formats and credential filenames. |
+| Plaintext leakage | Account config contains aliases and addresses only. Setup deletes the downloaded OAuth JSON after a successful Keychain import. Secret scanning blocks common token formats and credential filenames. |
 | Agent-provider exposure | Tools fetch only what the user or agent requests, cap and truncate results, and never include OAuth credentials. Users should choose Codex and Claude data controls appropriate for their mail. |
 | Email prompt injection | MCP and skill instructions define email as untrusted data. The server exposes data but never interprets or executes email instructions. |
 | Malicious HTML and tracking | HTML is converted locally. Images are skipped and link targets are removed. No remote resource is fetched. |

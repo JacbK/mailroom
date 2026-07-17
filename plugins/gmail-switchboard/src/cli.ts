@@ -33,10 +33,13 @@ program
 client
   .command('set')
   .argument('<path>', 'Google Desktop OAuth client JSON file')
+  .option('--delete-source', 'Delete the JSON file after it is stored in Keychain.')
   .description('Validate and store the OAuth client in macOS Keychain.')
-  .action(async (path: string) => {
-    await new AuthManager().importClientFile(path);
-    process.stdout.write('Google OAuth client stored in macOS Keychain.\n');
+  .action(async (path: string, options: { deleteSource?: boolean }) => {
+    await new AuthManager().importClientFile(path, options);
+    process.stdout.write(options.deleteSource
+      ? 'Google OAuth client stored in macOS Keychain; source JSON deleted.\n'
+      : 'Google OAuth client stored in macOS Keychain.\n');
   });
 
 client

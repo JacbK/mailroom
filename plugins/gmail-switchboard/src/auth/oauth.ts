@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, unlink } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { gmail } from '@googleapis/gmail';
@@ -80,7 +80,10 @@ export class AuthManager {
     private readonly keychain: SecretStore = new KeychainStore(),
   ) {}
 
-  public async importClientFile(path: string): Promise<void> {
+  public async importClientFile(
+    path: string,
+    options: { deleteSource?: boolean } = {},
+  ): Promise<void> {
     let parsed: z.infer<typeof clientFileSchema>;
     try {
       parsed = clientFileSchema.parse(JSON.parse(await readFile(path, 'utf8')));
@@ -96,6 +99,18 @@ export class AuthManager {
       clientId: parsed.installed.client_id,
       clientSecret: parsed.installed.client_secret,
     } satisfies OAuthClientConfig));
+    if (options.deleteSource) {
+      try {
+        await unlink(path);
+      } catch (error) {
+        throw new SwitchboardError(
+          'CREDENTIAL_FILE_CLEANUP_FAILED',
+          'The OAuth client is in Keychain, but the downloaded JSON could not be deleted.',
+          'Delete the downloaded OAuth JSON manually. Rerunning setup will keep using the Keychain copy.',
+          { cause: error },
+        );
+      }
+    }
   }
 
   public async hasClient(): Promise<boolean> {

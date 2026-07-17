@@ -10,6 +10,7 @@ export type ErrorCode =
   | 'GOOGLE_API_ERROR'
   | 'ATTACHMENT_BLOCKED'
   | 'ATTACHMENT_TOO_LARGE'
+  | 'CREDENTIAL_FILE_CLEANUP_FAILED'
   | 'UNSUPPORTED_PLATFORM';
 
 export class SwitchboardError extends Error {

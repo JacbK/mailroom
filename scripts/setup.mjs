@@ -100,7 +100,7 @@ Google requires one manual prerequisite:
 1. Open Google Cloud Console and enable the Gmail API.
 2. Configure the OAuth consent screen. If the app is in testing, add both Gmail addresses as test users.
 3. Create an OAuth client with application type “Desktop app”.
-4. Download the JSON file. It will be copied into Keychain, not this repository.
+4. Download the JSON file. It will be moved into Keychain and deleted after a successful import.
 
 `);
   open('https://console.cloud.google.com/apis/credentials');
@@ -108,7 +108,7 @@ Google requires one manual prerequisite:
   if (!path) {
     throw new Error('OAuth setup needs the downloaded Desktop client JSON. Rerun ./setup when it is ready.');
   }
-  run('node', [cli, 'client', 'set', path]);
+  run('node', [cli, 'client', 'set', path, '--delete-source']);
 }
 
 function accountListing() {
