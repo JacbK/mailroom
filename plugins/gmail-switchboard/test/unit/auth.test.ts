@@ -3,7 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { assertExpectedIdentity, AuthManager } from '../../src/auth/oauth.js';
+import { GMAIL_MODIFY_SCOPE } from '../../src/auth/scopes.js';
 import { SwitchboardError } from '../../src/errors.js';
+import { GmailClientFactory } from '../../src/gmail/client-factory.js';
 import type { SecretStore } from '../../src/security/keychain.js';
 import { ConfigStore } from '../../src/storage/config-store.js';
 
@@ -32,6 +34,36 @@ describe('OAuth identity verification', () => {
   it('rejects the wrong Google account before credentials are saved', () => {
     expect(() => assertExpectedIdentity('wrong@gmail.com', 'work@example.com'))
       .toThrow(expect.objectContaining<Partial<SwitchboardError>>({ code: 'WRONG_ACCOUNT' }));
+  });
+
+  it('explains the one-time permission upgrade for old credentials', async () => {
+    const keychain = new MemorySecretStore();
+    await keychain.set('account:work', JSON.stringify({
+      email: 'work@example.com',
+      refreshToken: 'old-read-token',
+    }));
+    const factory = new GmailClientFactory(undefined, keychain);
+
+    const error = await factory.getCredential('work').catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(SwitchboardError);
+    if (!(error instanceof SwitchboardError)) throw new Error('Expected SwitchboardError.');
+    expect(error.message).toContain('new mail-management permission');
+    expect(error.recovery).toContain('auth reauth work');
+  });
+
+  it('accepts credentials with the Gmail modify scope', async () => {
+    const keychain = new MemorySecretStore();
+    await keychain.set('account:work', JSON.stringify({
+      email: 'work@example.com',
+      refreshToken: 'modify-token',
+      scope: GMAIL_MODIFY_SCOPE,
+    }));
+    const factory = new GmailClientFactory(undefined, keychain);
+
+    await expect(factory.getCredential('work')).resolves.toMatchObject({
+      email: 'work@example.com',
+      scope: GMAIL_MODIFY_SCOPE,
+    });
   });
 
   it('deletes an imported OAuth JSON only after storing it in Keychain', async () => {

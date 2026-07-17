@@ -2,16 +2,12 @@
 
 I use a few Gmail accounts and Codex only lets me connect one. So I made this.
 
-It gives Codex and Claude one read-only Gmail tool across however many accounts you want. It searches all of them by default and keeps track of which inbox each email came from.
-
-## Set it up
+It does the same stuff as the normal Gmail connector across however many accounts you want. Search, read, draft, send, forward, label, archive, and Trash.
 
 Paste this into Codex:
 
 ```text
-Install Gmail Switchboard from https://github.com/JacbK/gmail-switchboard for me. Ask me which Gmail accounts I want to add and what to call each one. Keep going until it works in Codex and Claude and ./setup --doctor is healthy. I'll handle the Google sign-ins.
+Install Gmail Switchboard from https://github.com/JacbK/gmail-switchboard. Ask me which Gmail accounts I want to add and what to call them. Keep going until it works in Codex and Claude and ./setup --doctor is healthy. I'll handle the Google sign-ins.
 ```
 
-That's it. Start a new task after setup.
-
-It's read-only and keeps credentials in macOS Keychain. If something's weird, run `./setup --doctor`.
+That's it. Start a new task when setup finishes.

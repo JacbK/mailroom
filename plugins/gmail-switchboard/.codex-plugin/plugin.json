@@ -1,22 +1,23 @@
 {
   "name": "gmail-switchboard",
-  "version": "0.1.0+codex.20260717194402",
-  "description": "Read multiple Gmail accounts through one local MCP.",
+  "version": "0.2.0+codex.20260717215422",
+  "description": "Use multiple Gmail accounts through one local MCP.",
   "author": {
     "name": "Jacob Kieser"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Gmail Switchboard",
-    "shortDescription": "Read multiple Gmail accounts.",
-    "longDescription": "Local read-only Gmail MCP.",
+    "shortDescription": "Use all your Gmail accounts.",
+    "longDescription": "Search and manage any number of Gmail accounts without mixing them up.",
     "developerName": "Jacob Kieser",
     "category": "Productivity",
     "capabilities": [
-      "Read"
+      "Read",
+      "Write"
     ],
     "defaultPrompt": [
-      "Search all my Gmail accounts."
+      "Search and manage all my Gmail accounts."
     ]
   },
   "mcpServers": "./.mcp.json"

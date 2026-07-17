@@ -5,11 +5,13 @@ import { SwitchboardError } from '../errors.js';
 import { KeychainStore, type SecretStore } from '../security/keychain.js';
 import { ConfigStore } from '../storage/config-store.js';
 import type { AccountConfig, AccountCredential, OAuthClientConfig } from '../types.js';
+import { GMAIL_MODIFY_SCOPE } from '../auth/scopes.js';
 
 const clientSchema = z.object({ clientId: z.string().min(1), clientSecret: z.string().min(1) });
 const credentialSchema = z.object({
   email: z.email(),
   refreshToken: z.string().min(1),
+  scope: z.literal(GMAIL_MODIFY_SCOPE),
 });
 
 export interface GmailConnection {
@@ -53,13 +55,36 @@ export class GmailClientFactory {
         `Run \`./gmail-switchboard auth add ${alias}\` to authenticate it.`,
       );
     }
+    let parsed: unknown;
     try {
-      return credentialSchema.parse(JSON.parse(raw));
+      parsed = JSON.parse(raw);
     } catch (error) {
       throw new SwitchboardError(
         'AUTH_REQUIRED',
         `The "${alias}" credential stored in Keychain is invalid.`,
         `Run \`./gmail-switchboard auth reauth ${alias}\`.`,
+        { cause: error },
+      );
+    }
+    const priorCredential = z.object({
+      email: z.email(),
+      refreshToken: z.string().min(1),
+      scope: z.string().optional(),
+    }).safeParse(parsed);
+    if (priorCredential.success && priorCredential.data.scope !== GMAIL_MODIFY_SCOPE) {
+      throw new SwitchboardError(
+        'AUTH_REQUIRED',
+        `The "${alias}" Gmail connection needs the new mail-management permission.`,
+        `Run ./gmail-switchboard auth reauth ${alias} and approve access again.`,
+      );
+    }
+    try {
+      return credentialSchema.parse(parsed);
+    } catch (error) {
+      throw new SwitchboardError(
+        'AUTH_REQUIRED',
+        `The "${alias}" credential stored in Keychain is invalid.`,
+        `Run ./gmail-switchboard auth reauth ${alias}.`,
         { cause: error },
       );
     }

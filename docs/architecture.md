@@ -30,6 +30,12 @@ Each search call also has a 45-second deadline and a bounded Gmail page budget. 
 
 ## Message handling
 
-The server prefers `text/plain` MIME parts and converts HTML locally when plain text is unavailable. Conversion drops images and link targets. Message bodies and thread responses are capped and report truncation.
+The server prefers `text/plain` MIME parts and converts HTML locally when plain text is unavailable. Conversion drops images and link targets. Parsed message bodies and thread responses are capped and report truncation. The explicit `include_raw_mime` option returns the full original MIME once, without a second base64 copy.
 
-Attachments require a separate tool call. Executable and archive formats are blocked, the default limit is 1 MiB, and the hard limit is 5 MiB. Returned bytes include a SHA-256 digest and are never executed.
+Attachments require a separate tool call. Executable and archive formats are blocked, the default limit is 1 MiB, and the hard limit is 25 MiB. Returned bytes include a SHA-256 digest and are never executed.
+
+## Writes
+
+The MCP mirrors the normal Gmail connector: labels, drafts, sends, forwards, archive, and Trash. New mail requires an account alias. Existing mail and drafts use qualified IDs, so the account is never guessed.
+
+Outgoing Markdown is rendered locally into sanitized HTML with a plain-text part. Sends and draft creation are not retried because a retry could duplicate mail. Forwarding preserves original attachments but enforces a 25 MiB aggregate limit and never executes them. Delete moves mail to Gmail Trash. There is no permanent-delete API.

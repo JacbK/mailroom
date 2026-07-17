@@ -14,7 +14,7 @@ function decodeBase64Url(value: string): string {
   }
 }
 
-function header(message: gmail_v1.Schema$Message, name: string): string {
+export function headerOf(message: gmail_v1.Schema$Message, name: string): string {
   const match = message.payload?.headers?.find(
     (item) => item.name?.toLowerCase() === name.toLowerCase(),
   );
@@ -62,7 +62,7 @@ function bodyText(message: gmail_v1.Schema$Message, limit: number): {
 function dateOf(message: gmail_v1.Schema$Message): string | null {
   const millis = Number(message.internalDate);
   if (Number.isFinite(millis) && millis > 0) return new Date(millis).toISOString();
-  const parsed = Date.parse(header(message, 'Date'));
+  const parsed = Date.parse(headerOf(message, 'Date'));
   return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
 }
 
@@ -97,9 +97,9 @@ export function toSearchResult(
     account_email: account.email,
     message_id: qualifyId(account.alias, messageId),
     thread_id: qualifyId(account.alias, threadId),
-    subject: header(message, 'Subject') || '(no subject)',
-    from: header(message, 'From'),
-    to: recipients(header(message, 'To')),
+    subject: headerOf(message, 'Subject') || '(no subject)',
+    from: headerOf(message, 'From'),
+    to: recipients(headerOf(message, 'To')),
     date: dateOf(message),
     snippet: message.snippet?.trim() ?? '',
     labels: message.labelIds ?? [],
@@ -116,7 +116,7 @@ export function toMessageView(
   const body = bodyText(message, bodyLimit);
   return {
     ...summary,
-    cc: recipients(header(message, 'Cc')),
+    cc: recipients(headerOf(message, 'Cc')),
     body_text: body.text,
     body_truncated: body.truncated,
     attachments: attachmentsOf(message),

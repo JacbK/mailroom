@@ -6,6 +6,7 @@ export interface AccountConfig {
 export interface AccountCredential {
   email: string;
   refreshToken: string;
+  scope: string;
 }
 
 export interface OAuthClientConfig {

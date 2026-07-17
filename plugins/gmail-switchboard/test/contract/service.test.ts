@@ -70,6 +70,16 @@ describe('GmailService contract', () => {
     expect(page.next_cursor).toMatch(/[0-9a-f-]{36}/);
   });
 
+  it('routes qualified user-label searches only to the owning account', async () => {
+    const page = await service.search({ labelIds: ['work:Label_1'], limit: 2 });
+
+    expect(page.searched_accounts.map((account) => account.alias)).toEqual(['work']);
+    expect(work.labelFilters[0]).toEqual(['Label_1']);
+    expect(personal.labelFilters).toEqual([]);
+    await expect(service.search({ labelIds: ['Label_1'] }))
+      .rejects.toMatchObject({ code: 'AMBIGUOUS_ID' });
+  });
+
   it('includes newly configured accounts without changing the service', async () => {
     await config.upsert({ alias: 'archive', email: 'archive@example.com' });
     const archive = new FakeGateway([
@@ -378,5 +388,121 @@ describe('GmailService contract', () => {
     service = new GmailService(config, undefined, provider);
 
     await expect(service.search({ accounts: ['work'] })).rejects.toBeInstanceOf(SwitchboardError);
+  });
+
+  it('returns profiles and account-qualified labels across accounts', async () => {
+    work.labels.push({ id: 'Label_1', name: 'Customers', type: 'user', messagesTotal: 12 });
+    const profiles = await service.profiles();
+    const labels = await service.listLabels(['work']);
+
+    expect(profiles.map((profile) => profile.account_alias)).toEqual(['personal', 'work']);
+    expect(labels[0]?.labels).toContainEqual(expect.objectContaining({
+      id: 'work:Label_1',
+      name: 'Customers',
+      messages_total: 12,
+    }));
+  });
+
+  it('routes label changes, archive, and Trash by qualified account IDs', async () => {
+    work.labels.push({ id: 'Label_1', name: 'Follow up', type: 'user' });
+    await service.applyLabelsToEmails({
+      messageIds: ['work:w1', 'personal:p1'],
+      addLabelNames: ['Follow up'],
+      createMissingLabels: true,
+    });
+    await service.archiveEmails(['work:w2']);
+    await service.deleteEmails(['personal:p2']);
+
+    expect(work.modifications[0]).toMatchObject({ messageIds: ['w1'], addLabelIds: ['Label_1'] });
+    expect(personal.labels).toContainEqual(expect.objectContaining({ name: 'Follow up' }));
+    expect(work.modifications[1]).toMatchObject({ messageIds: ['w2'], removeLabelIds: ['INBOX'] });
+    expect(personal.trashed).toEqual(['p2']);
+    expect(work.trashed).toEqual([]);
+  });
+
+  it('rejects a user-label ID before it can cross into the wrong account', async () => {
+    await expect(service.batchModifyEmail({
+      messageIds: ['personal:p1'],
+      addLabels: ['work:Label_1'],
+    })).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+    expect(personal.modifications).toEqual([]);
+  });
+
+  it('reports partial mutation results instead of hiding earlier changes', async () => {
+    personal.batchModify = async () => { throw Object.assign(new Error('temporary'), { code: 503 }); };
+    personal.trashMessage = async () => { throw Object.assign(new Error('temporary'), { code: 503 }); };
+
+    const labels = await service.applyLabelsToEmails({
+      messageIds: ['work:w1', 'personal:p1'],
+      addLabelNames: ['Follow up'],
+      createMissingLabels: true,
+    });
+    const trashed = await service.deleteEmails(['work:w2', 'personal:p2']);
+
+    expect(labels.modified).toBe(1);
+    expect(labels.accounts).toContainEqual(expect.objectContaining({ alias: 'personal', modified: 0 }));
+    expect(labels.accounts.find((account) => account.alias === 'personal')?.error?.code)
+      .toBe('GOOGLE_API_ERROR');
+    expect(trashed.trashed).toBe(1);
+    expect(trashed.accounts.find((account) => account.alias === 'personal')?.failures[0]?.message_id)
+      .toBe('personal:p2');
+  });
+
+  it('creates and sends drafts from the selected account', async () => {
+    const draft = await service.createDraft({
+      account: 'work',
+      to: 'person@example.com',
+      subject: 'Hello',
+      body: 'A **short** note.',
+    });
+    expect(draft.draft_id).toBe('work:draft-1');
+    expect(personal.drafts.size).toBe(0);
+
+    const sent = await service.sendDraft(draft.draft_id);
+    expect(sent.account_alias).toBe('work');
+    expect(work.drafts.size).toBe(0);
+  });
+
+  it('sends replies only from the account that owns the source message', async () => {
+    await expect(service.sendEmail({
+      account: 'personal',
+      to: 'person@example.com',
+      subject: 'Re: Work one',
+      body: 'Reply',
+      replyMessageId: 'work:w1',
+    })).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+
+    const sent = await service.sendEmail({
+      account: 'work',
+      to: 'person@example.com',
+      subject: 'Re: Work one',
+      body: 'Reply',
+      replyMessageId: 'work:w1',
+    });
+    expect(sent.thread_id).toBe('work:wt');
+    expect(work.sent).toHaveLength(1);
+    expect(personal.sent).toHaveLength(0);
+  });
+
+  it('rejects oversized forwarded attachments before downloading them', async () => {
+    work = new FakeGateway([
+      message({
+        id: 'large-forward',
+        date: '2026-07-17T00:00:00Z',
+        attachment: {
+          id: 'large',
+          filename: 'large.dat',
+          mimeType: 'application/octet-stream',
+          size: 26 * 1024 * 1024,
+        },
+      }),
+    ], 2, 'work@example.com');
+    const provider = async (alias: string) => ({ account: await config.get(alias), gateway: work });
+    service = new GmailService(config, undefined, provider);
+
+    await expect(service.forwardEmails({
+      messageIds: ['work:large-forward'],
+      to: 'person@example.com',
+    })).rejects.toMatchObject({ code: 'ATTACHMENT_TOO_LARGE' });
   });
 });

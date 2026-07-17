@@ -1,9 +1,9 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createMcpServer, assertReadOnlyServer } from './mcp/server.js';
+import { createMcpServer, assertSafeServer } from './mcp/server.js';
 import { safeDiagnostic } from './security/redact.js';
 
 async function main(): Promise<void> {
-  assertReadOnlyServer();
+  assertSafeServer();
   const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);

@@ -20,7 +20,7 @@ Useful source areas:
 - `test/unit`: pure behavior tests
 - `test/contract`: mocked Gmail and in-memory MCP tests
 
-Do not add Gmail write scopes or mutation tools as part of an unrelated change. Do not put real email bodies, headers, OAuth responses, or attachment data into fixtures.
+Do not add scopes beyond `gmail.modify` or a permanent-delete tool. Do not put real email bodies, headers, OAuth responses, or attachment data into fixtures.
 
 Current reference docs:
 

@@ -1,6 +1,6 @@
 # Gmail Switchboard Agent Guide
 
-Keep this project read-only. Do not add Gmail mutations or broader OAuth scopes unless the user explicitly requests a separately reviewed capability.
+Keep the Gmail connector-parity surface working across any number of accounts. Mutations require explicit user intent, every ID stays account-qualified, and delete means recoverable Gmail Trash, never permanent deletion.
 
 Run `pnpm verify` for code changes. Run `pnpm test:coverage` for behavior changes and `pnpm audit --audit-level high` before release work.
 

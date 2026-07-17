@@ -1,6 +1,17 @@
 # Claude review record
 
-Claude Opus reviewed this project four times on July 17, 2026. Claude only reviewed and did not modify, commit, push, publish, or access Gmail.
+Claude Opus reviewed this project five times on July 17, 2026. Claude only reviewed and did not modify, commit, push, publish, or access Gmail.
+
+## Connector parity review
+
+Claude Opus reviewed the 0.2 write-capability expansion in an isolated worktree.
+
+- Forwarding now enforces a 25 MiB aggregate attachment limit before downloading. It still preserves original attachments for Gmail parity.
+- Raw MIME no longer returns a duplicate base64 copy. The full-MIME exception is documented.
+- Old read-only credentials now get a clear one-time permission-upgrade message.
+- User-label IDs must be account-qualified and searches only query the owning accounts.
+- Cross-account label, archive, and Trash actions return partial success details instead of hiding earlier changes.
+- A direct contract test confirms per-account label filters reach Gmail.
 
 ## Unlimited-account onboarding follow-up
 

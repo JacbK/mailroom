@@ -9,8 +9,8 @@ import { SwitchboardError } from '../errors.js';
 import { KeychainStore, type SecretStore } from '../security/keychain.js';
 import { ConfigStore } from '../storage/config-store.js';
 import type { OAuthClientConfig } from '../types.js';
+import { GMAIL_MODIFY_SCOPE } from './scopes.js';
 
-const GMAIL_READONLY_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 const clientFileSchema = z.object({
   installed: z.object({
     client_id: z.string().min(1),
@@ -20,7 +20,11 @@ const clientFileSchema = z.object({
 
 function openBrowser(url: string): void {
   const command = process.platform === 'darwin' ? '/usr/bin/open' : 'xdg-open';
-  const child = spawn(command, [url], { detached: true, stdio: 'ignore' });
+  const preferredBrowser = process.env.GMAIL_SWITCHBOARD_BROWSER?.trim();
+  const args = process.platform === 'darwin' && preferredBrowser
+    ? ['-a', preferredBrowser, url]
+    : [url];
+  const child = spawn(command, args, { detached: true, stdio: 'ignore' });
   child.unref();
 }
 
@@ -156,7 +160,7 @@ export class AuthManager {
     const authUrl = oauth.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent select_account',
-      scope: [GMAIL_READONLY_SCOPE],
+      scope: [GMAIL_MODIFY_SCOPE],
       login_hint: expectedEmail,
       state,
       code_challenge: verifier.codeChallenge,
@@ -185,6 +189,7 @@ export class AuthManager {
       await this.keychain.set(`account:${alias}`, JSON.stringify({
         email: authenticatedEmail,
         refreshToken: tokens.refresh_token,
+        scope: GMAIL_MODIFY_SCOPE,
       }));
       await this.config.upsert({ alias, email: authenticatedEmail });
     } finally {

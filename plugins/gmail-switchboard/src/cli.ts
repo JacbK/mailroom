@@ -24,7 +24,7 @@ async function confirm(question: string): Promise<boolean> {
 program
   .name('gmail-switchboard')
   .description('Gmail Switchboard setup and diagnostics.')
-  .version('0.1.0');
+  .version('0.2.0');
 
 client
   .command('set')
