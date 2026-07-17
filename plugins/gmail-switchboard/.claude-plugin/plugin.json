@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "gmail-switchboard",
+  "displayName": "Gmail Switchboard",
+  "version": "0.1.0",
+  "description": "Search and read multiple Gmail accounts without mixing up inboxes or thread IDs.",
+  "author": {
+    "name": "Jacob Kieser"
+  },
+  "skills": "./skills/"
+}

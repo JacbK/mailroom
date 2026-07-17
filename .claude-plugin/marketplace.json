@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "gmail-switchboard-local",
+  "description": "Jacob's private local plugins.",
+  "owner": {
+    "name": "Jacob Kieser"
+  },
+  "plugins": [
+    {
+      "name": "gmail-switchboard",
+      "source": "./plugins/gmail-switchboard",
+      "description": "Search and read multiple Gmail accounts without mixing them up.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "strict": true
+    }
+  ]
+}

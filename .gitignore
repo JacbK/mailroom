@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+*.tmp
+.DS_Store
+.env
+.env.*
+!.env.example
+client_secret*.json
+credentials*.json
+token*.json
+oauth*.json
+.gmail-switchboard/
+.claude/settings.local.json
