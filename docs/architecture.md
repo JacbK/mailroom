@@ -22,7 +22,11 @@ Each account has a short alias. IDs cross the MCP boundary as `<alias>:<gmail-id
 
 Search defaults to every configured account. Each account is queried with bounded concurrency, message metadata is merged by date, and results retain their alias and email address.
 
-Pagination state stays in the MCP process for 15 minutes. Cursors are random opaque UUIDs. The state includes per-account Gmail page tokens and buffered results, which prevents merged pagination from dropping messages. Cursors intentionally expire when the MCP process restarts.
+Pagination state stays in the MCP process for 15 minutes after its last use. Cursors are random opaque UUIDs. The state includes per-account Gmail page tokens and buffered results, which prevents merged pagination from dropping messages. Cursors intentionally expire when the MCP process restarts.
+
+An expired or unknown cursor returns `CURSOR_EXPIRED`, never an empty page. Agent guidance tells the client to repeat the original search without the cursor so partial results are not presented as complete.
+
+Each search call also has a 45-second deadline and a bounded Gmail page budget. If either limit is reached, the response is marked `partial: true` and retains `next_cursor`, so the caller can continue without hanging or silently claiming completeness.
 
 ## Message handling
 

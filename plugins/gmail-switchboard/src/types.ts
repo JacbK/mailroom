@@ -57,4 +57,6 @@ export interface SearchPage {
   next_cursor: string | null;
   result_count: number;
   searched_accounts: AccountConfig[];
+  partial: boolean;
+  partial_reason: string | null;
 }

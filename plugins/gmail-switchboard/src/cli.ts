@@ -183,12 +183,14 @@ program
     const report = {
       searched_accounts: page.searched_accounts,
       result_count: page.result_count,
+      partial: page.partial,
+      partial_reason: page.partial_reason,
       qualified_ids: page.results.every((item) => (
         item.message_id.startsWith(`${item.account_alias}:`)
         && item.thread_id.startsWith(`${item.account_alias}:`)
       )),
       sample,
-      ok: page.results.every((item) => (
+      ok: !page.partial && page.results.every((item) => (
         item.message_id.startsWith(`${item.account_alias}:`)
         && item.thread_id.startsWith(`${item.account_alias}:`)
       )) && (sample === null || (sample.message_read && sample.thread_read)),
@@ -197,6 +199,7 @@ program
     else process.stdout.write([
       `Accounts checked: ${page.searched_accounts.map((account) => account.alias).join(', ')}`,
       `Search results checked: ${page.result_count}`,
+      `Complete page: ${page.partial ? 'no' : 'ok'}`,
       `Namespaced IDs: ${report.qualified_ids ? 'ok' : 'failed'}`,
       `Message and thread read: ${sample === null ? 'no messages found' : report.ok ? 'ok' : 'failed'}`,
       '',

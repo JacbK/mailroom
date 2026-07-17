@@ -1,22 +1,32 @@
 import type { gmail_v1 } from '@googleapis/gmail';
 import { withRetry } from './retry.js';
 
+const GOOGLE_REQUEST_TIMEOUT_MS = 20_000;
+function requestOptions(signal?: AbortSignal): { timeout: number; signal?: AbortSignal } {
+  return signal
+    ? { timeout: GOOGLE_REQUEST_TIMEOUT_MS, signal }
+    : { timeout: GOOGLE_REQUEST_TIMEOUT_MS };
+}
+
 export interface GmailGateway {
-  profile(): Promise<gmail_v1.Schema$Profile>;
-  listMessages(query: string, maxResults: number, pageToken?: string): Promise<{
+  profile(signal?: AbortSignal): Promise<gmail_v1.Schema$Profile>;
+  listMessages(query: string, maxResults: number, pageToken?: string, signal?: AbortSignal): Promise<{
     messages: gmail_v1.Schema$Message[];
     nextPageToken?: string;
   }>;
-  getMessage(id: string, format: 'metadata' | 'full'): Promise<gmail_v1.Schema$Message>;
-  getThread(id: string): Promise<gmail_v1.Schema$Thread>;
-  getAttachment(messageId: string, attachmentId: string): Promise<gmail_v1.Schema$MessagePartBody>;
+  getMessage(id: string, format: 'metadata' | 'full', signal?: AbortSignal): Promise<gmail_v1.Schema$Message>;
+  getThread(id: string, signal?: AbortSignal): Promise<gmail_v1.Schema$Thread>;
+  getAttachment(messageId: string, attachmentId: string, signal?: AbortSignal): Promise<gmail_v1.Schema$MessagePartBody>;
 }
 
 export class GoogleGmailGateway implements GmailGateway {
   public constructor(private readonly gmail: gmail_v1.Gmail) {}
 
-  public async profile(): Promise<gmail_v1.Schema$Profile> {
-    const response = await withRetry(async () => await this.gmail.users.getProfile({ userId: 'me' }));
+  public async profile(signal?: AbortSignal): Promise<gmail_v1.Schema$Profile> {
+    const response = await withRetry(async () => await this.gmail.users.getProfile(
+      { userId: 'me' },
+      requestOptions(signal),
+    ));
     return response.data;
   }
 
@@ -24,6 +34,7 @@ export class GoogleGmailGateway implements GmailGateway {
     query: string,
     maxResults: number,
     pageToken?: string,
+    signal?: AbortSignal,
   ): Promise<{ messages: gmail_v1.Schema$Message[]; nextPageToken?: string }> {
     const params: gmail_v1.Params$Resource$Users$Messages$List = {
       userId: 'me',
@@ -31,7 +42,10 @@ export class GoogleGmailGateway implements GmailGateway {
     };
     if (query) params.q = query;
     if (pageToken) params.pageToken = pageToken;
-    const response = await withRetry(async () => await this.gmail.users.messages.list(params));
+    const response = await withRetry(async () => await this.gmail.users.messages.list(
+      params,
+      requestOptions(signal),
+    ));
     const result: { messages: gmail_v1.Schema$Message[]; nextPageToken?: string } = {
       messages: response.data.messages ?? [],
     };
@@ -39,35 +53,49 @@ export class GoogleGmailGateway implements GmailGateway {
     return result;
   }
 
-  public async getMessage(id: string, format: 'metadata' | 'full'): Promise<gmail_v1.Schema$Message> {
+  public async getMessage(
+    id: string,
+    format: 'metadata' | 'full',
+    signal?: AbortSignal,
+  ): Promise<gmail_v1.Schema$Message> {
     const params: gmail_v1.Params$Resource$Users$Messages$Get = {
       userId: 'me',
       id,
       format,
     };
     if (format === 'metadata') params.metadataHeaders = ['Subject', 'From', 'To', 'Date'];
-    const response = await withRetry(async () => await this.gmail.users.messages.get(params));
+    const response = await withRetry(async () => await this.gmail.users.messages.get(
+      params,
+      requestOptions(signal),
+    ));
     return response.data;
   }
 
-  public async getThread(id: string): Promise<gmail_v1.Schema$Thread> {
-    const response = await withRetry(async () => await this.gmail.users.threads.get({
-      userId: 'me',
-      id,
-      format: 'full',
-    }));
+  public async getThread(id: string, signal?: AbortSignal): Promise<gmail_v1.Schema$Thread> {
+    const response = await withRetry(async () => await this.gmail.users.threads.get(
+      {
+        userId: 'me',
+        id,
+        format: 'full',
+      },
+      requestOptions(signal),
+    ));
     return response.data;
   }
 
   public async getAttachment(
     messageId: string,
     attachmentId: string,
+    signal?: AbortSignal,
   ): Promise<gmail_v1.Schema$MessagePartBody> {
-    const response = await withRetry(async () => await this.gmail.users.messages.attachments.get({
-      userId: 'me',
-      messageId,
-      id: attachmentId,
-    }));
+    const response = await withRetry(async () => await this.gmail.users.messages.attachments.get(
+      {
+        userId: 'me',
+        messageId,
+        id: attachmentId,
+      },
+      requestOptions(signal),
+    ));
     return response.data;
   }
 }

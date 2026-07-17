@@ -68,7 +68,7 @@ export function createMcpServer(service = new GmailService()): McpServer {
     server,
     'gmail_search',
     'Search Gmail accounts',
-    'Search one, several, or all configured Gmail accounts. Defaults to all accounts. Accepts Gmail search syntax and returns chronologically merged results with account-qualified message and thread IDs. Reuse next_cursor unchanged for another page.',
+    'Search one, several, or all configured Gmail accounts. Defaults to all accounts. Accepts Gmail search syntax and returns chronologically merged results with account-qualified message and thread IDs. Reuse next_cursor unchanged for another page. If partial is true, the page hit a safety limit and is not complete; continue with next_cursor when complete coverage matters.',
     {
       query: z.string().max(2_000).optional().describe('Normal Gmail search query, such as `from:github.com newer_than:30d`.'),
       accounts: z.array(z.string().regex(/^[a-z][a-z0-9-]{0,31}$/)).min(1).max(20).optional()

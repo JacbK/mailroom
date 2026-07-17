@@ -11,6 +11,9 @@ const CURSOR_TTL_MS = 15 * 60 * 1_000;
 const CURSOR_CAPACITY = 100;
 const HARD_ATTACHMENT_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_ATTACHMENT_LIMIT = 1024 * 1024;
+const SEARCH_DEADLINE_MS = 45_000;
+const MIN_PAGE_FETCH_BUDGET = 12;
+const MAX_PAGE_FETCH_BUDGET = 40;
 const BLOCKED_ATTACHMENT_TYPES = new Set([
   'application/java-archive',
   'application/vnd.apple.installer+xml',
@@ -35,14 +38,14 @@ type GatewayProvider = (alias: string) => Promise<ConnectedGateway>;
 interface AccountPageState {
   pageToken?: string;
   exhausted: boolean;
+  buffer: SearchResult[];
 }
 
 interface CursorState {
-  createdAt: number;
+  lastUsedAt: number;
   query: string;
   aliases: string[];
   accounts: Map<string, AccountPageState>;
-  buffer: SearchResult[];
   seen: Set<string>;
 }
 
@@ -101,6 +104,7 @@ async function mapLimit<T, R>(
 
 export class GmailService {
   private readonly cursors = new Map<string, CursorState>();
+  private readonly activeCursors = new Set<string>();
 
   public constructor(
     private readonly config = new ConfigStore(),
@@ -108,7 +112,9 @@ export class GmailService {
     private readonly provideGateway: GatewayProvider = defaultProvider(factory),
   ) {}
 
-  public async accounts(): Promise<Array<AccountConfig & { status: 'connected' | 'needs_auth' }>> {
+  public async accounts(): Promise<Array<AccountConfig & {
+    status: 'connected' | 'needs_auth' | 'error';
+  }>> {
     const accounts = await this.config.list();
     return await mapLimit(accounts, 3, async (account) => {
       try {
@@ -116,13 +122,34 @@ export class GmailService {
         const profile = await gateway.profile();
         const connected = profile.emailAddress?.toLowerCase() === account.email.toLowerCase();
         return { ...account, status: connected ? 'connected' as const : 'needs_auth' as const };
-      } catch {
-        return { ...account, status: 'needs_auth' as const };
+      } catch (error) {
+        const safe = toSwitchboardError(error);
+        return {
+          ...account,
+          status: safe.code === 'AUTH_REQUIRED' ? 'needs_auth' as const : 'error' as const,
+        };
       }
     });
   }
 
   public async search(input: SearchInput): Promise<SearchPage> {
+    const cursor = input.cursor;
+    if (cursor && this.activeCursors.has(cursor)) {
+      throw new SwitchboardError(
+        'CURSOR_IN_USE',
+        'This search cursor is already being used by another request.',
+        'Wait for the current page to finish, then reuse the cursor sequentially.',
+      );
+    }
+    if (cursor) this.activeCursors.add(cursor);
+    try {
+      return await this.searchUnlocked(input);
+    } finally {
+      if (cursor) this.activeCursors.delete(cursor);
+    }
+  }
+
+  private async searchUnlocked(input: SearchInput): Promise<SearchPage> {
     const limit = input.limit ?? 10;
     if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
       throw new SwitchboardError(
@@ -131,7 +158,7 @@ export class GmailService {
         'Use a smaller page and follow next_cursor when more results are needed.',
       );
     }
-    this.pruneCursors();
+    this.pruneExpiredCursors();
 
     const cursorId = input.cursor ?? randomUUID();
     let state: CursorState;
@@ -145,6 +172,9 @@ export class GmailService {
         );
       }
       state = existing;
+      state.lastUsedAt = Date.now();
+      this.cursors.delete(cursorId);
+      this.cursors.set(cursorId, state);
     } else {
       const configured = await this.config.list();
       if (configured.length === 0) {
@@ -169,24 +199,63 @@ export class GmailService {
       const parts = [input.query?.trim(), dateFilter(input.after, 'after'), dateFilter(input.before, 'before')]
         .filter((part): part is string => Boolean(part));
       state = {
-        createdAt: Date.now(),
+        lastUsedAt: Date.now(),
         query: parts.join(' '),
         aliases,
-        accounts: new Map(aliases.map((alias) => [alias, { exhausted: false }])),
-        buffer: [],
+        accounts: new Map(aliases.map((alias) => [alias, { exhausted: false, buffer: [] }])),
         seen: new Set(),
       };
+      this.enforceCursorCapacity();
       this.cursors.set(cursorId, state);
     }
 
-    while (state.buffer.length < limit && [...state.accounts.values()].some((item) => !item.exhausted)) {
-      await this.fetchSearchRound(state, Math.min(limit, 25));
+    const results: SearchResult[] = [];
+    const signal = AbortSignal.timeout(SEARCH_DEADLINE_MS);
+    const pageBudget = {
+      remaining: Math.min(
+        MAX_PAGE_FETCH_BUDGET,
+        Math.max(MIN_PAGE_FETCH_BUDGET, state.aliases.length * 2),
+      ),
+    };
+    let partialReason: string | null = null;
+    while (results.length < limit) {
+      try {
+        await this.fillAccountHeads(
+          state,
+          Math.min(Math.max(limit, 10), 25),
+          signal,
+          pageBudget,
+        );
+      } catch (error) {
+        if (!(error instanceof SwitchboardError) || error.code !== 'TIMEOUT') throw error;
+        partialReason = error.message;
+        break;
+      }
+      const missingHead = [...state.accounts.values()].some(
+        (item) => item.buffer.length === 0 && !item.exhausted,
+      );
+      if (missingHead && pageBudget.remaining === 0) {
+        partialReason = 'The per-call Gmail page limit was reached before chronological order could be proven.';
+        break;
+      }
+      const candidates = state.aliases
+        .map((alias) => ({ alias, result: state.accounts.get(alias)?.buffer[0] }))
+        .filter((item): item is { alias: string; result: SearchResult } => item.result !== undefined)
+        .sort((a, b) => compareResults(a.result, b.result));
+      const newest = candidates[0];
+      if (!newest) {
+        if ([...state.accounts.values()].some((item) => !item.exhausted)) {
+          partialReason = 'The per-call Gmail page limit was reached before another result was found.';
+        }
+        break;
+      }
+      state.accounts.get(newest.alias)?.buffer.shift();
+      results.push(newest.result);
     }
 
-    state.buffer.sort(compareResults);
-    const results = state.buffer.splice(0, limit);
-    const hasMore = state.buffer.length > 0
-      || [...state.accounts.values()].some((item) => !item.exhausted);
+    const hasMore = [...state.accounts.values()].some(
+      (item) => item.buffer.length > 0 || !item.exhausted,
+    );
     if (!hasMore && cursorId) this.cursors.delete(cursorId);
     const accountConfigs = await Promise.all(state.aliases.map(async (alias) => await this.config.get(alias)));
     return {
@@ -194,6 +263,8 @@ export class GmailService {
       next_cursor: hasMore ? cursorId : null,
       result_count: results.length,
       searched_accounts: accountConfigs,
+      partial: partialReason !== null,
+      partial_reason: partialReason,
     };
   }
 
@@ -305,38 +376,77 @@ export class GmailService {
     };
   }
 
-  private async fetchSearchRound(state: CursorState, pageSize: number): Promise<void> {
-    const active = state.aliases.filter((alias) => !state.accounts.get(alias)?.exhausted);
-    await mapLimit(active, 3, async (alias) => {
-      const pageState = state.accounts.get(alias);
-      if (!pageState) return;
-      const { account, gateway } = await this.provideGateway(alias);
-      try {
-        const page = await gateway.listMessages(state.query, pageSize, pageState.pageToken);
-        const detailed = await mapLimit(page.messages, 5, async (message) => {
-          if (!message.id) return null;
-          return toSearchResult(await gateway.getMessage(message.id, 'metadata'), account);
-        });
-        for (const item of detailed) {
-          if (item && !state.seen.has(item.message_id)) {
-            state.seen.add(item.message_id);
-            state.buffer.push(item);
-          }
-        }
-        if (page.nextPageToken) pageState.pageToken = page.nextPageToken;
-        else delete pageState.pageToken;
-        pageState.exhausted = !page.nextPageToken;
-      } catch (error) {
-        throw toSwitchboardError(error);
-      }
+  private async fillAccountHeads(
+    state: CursorState,
+    pageSize: number,
+    signal: AbortSignal,
+    pageBudget: { remaining: number },
+  ): Promise<void> {
+    let active = state.aliases.filter((alias) => {
+      const item = state.accounts.get(alias);
+      return item !== undefined && item.buffer.length === 0 && !item.exhausted;
     });
+    while (active.length > 0 && pageBudget.remaining > 0) {
+      if (signal.aborted) {
+        throw new SwitchboardError(
+          'TIMEOUT',
+          'Gmail search reached its 45-second deadline.',
+          'Continue with next_cursor, or narrow the accounts, query, or date range.',
+        );
+      }
+      const scheduled = active.slice(0, pageBudget.remaining);
+      pageBudget.remaining -= scheduled.length;
+      await mapLimit(scheduled, 3, async (alias) => {
+        const pageState = state.accounts.get(alias);
+        if (!pageState) return;
+        const { account, gateway } = await this.provideGateway(alias);
+        try {
+          const page = await gateway.listMessages(
+            state.query,
+            pageSize,
+            pageState.pageToken,
+            signal,
+          );
+          const detailed = await mapLimit(page.messages, 5, async (message) => {
+            if (!message.id) return null;
+            return toSearchResult(await gateway.getMessage(message.id, 'metadata', signal), account);
+          });
+          for (const item of detailed.filter((value): value is SearchResult => value !== null).sort(compareResults)) {
+            if (!state.seen.has(item.message_id)) {
+              state.seen.add(item.message_id);
+              pageState.buffer.push(item);
+            }
+          }
+          if (page.nextPageToken) pageState.pageToken = page.nextPageToken;
+          else delete pageState.pageToken;
+          pageState.exhausted = !page.nextPageToken;
+        } catch (error) {
+          if (signal.aborted) {
+            throw new SwitchboardError(
+              'TIMEOUT',
+              'Gmail search reached its 45-second deadline.',
+              'Continue with next_cursor, or narrow the accounts, query, or date range.',
+              { cause: error },
+            );
+          }
+          throw toSwitchboardError(error);
+        }
+      });
+      active = state.aliases.filter((alias) => {
+        const item = state.accounts.get(alias);
+        return item !== undefined && item.buffer.length === 0 && !item.exhausted;
+      });
+    }
   }
 
-  private pruneCursors(): void {
+  private pruneExpiredCursors(): void {
     const now = Date.now();
     for (const [key, value] of this.cursors) {
-      if (now - value.createdAt > CURSOR_TTL_MS) this.cursors.delete(key);
+      if (now - value.lastUsedAt > CURSOR_TTL_MS) this.cursors.delete(key);
     }
+  }
+
+  private enforceCursorCapacity(): void {
     while (this.cursors.size >= CURSOR_CAPACITY) {
       const oldest = this.cursors.keys().next().value;
       if (!oldest) break;
