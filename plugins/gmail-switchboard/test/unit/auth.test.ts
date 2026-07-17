@@ -1,9 +1,9 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { assertExpectedIdentity, AuthManager } from '../../src/auth/oauth.js';
-import type { SwitchboardError } from '../../src/errors.js';
+import { SwitchboardError } from '../../src/errors.js';
 import type { SecretStore } from '../../src/security/keychain.js';
 import { ConfigStore } from '../../src/storage/config-store.js';
 
@@ -54,6 +54,69 @@ describe('OAuth identity verification', () => {
         clientSecret: 'test-secret-value',
       }));
       await expect(readFile(source, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves the OAuth JSON when the Keychain write fails', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'gmail-switchboard-auth-'));
+    const source = join(directory, 'oauth-client.json');
+    const contents = JSON.stringify({
+      installed: {
+        client_id: 'test-client-id',
+        client_secret: 'test-secret-value',
+      },
+    });
+    await writeFile(source, contents, { mode: 0o600 });
+    const failingKeychain: SecretStore = {
+      get: async () => null,
+      set: async () => { throw new Error('simulated Keychain failure'); },
+      delete: async () => false,
+    };
+
+    try {
+      const auth = new AuthManager(new ConfigStore(join(directory, 'accounts.json')), failingKeychain);
+      await expect(auth.importClientFile(source, { deleteSource: true }))
+        .rejects.toThrow('simulated Keychain failure');
+      await expect(readFile(source, 'utf8')).resolves.toBe(contents);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('reports the exact source path when cleanup fails after a Keychain write', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'gmail-switchboard-auth-'));
+    const source = join(directory, 'oauth-client.json');
+    const keychain = new MemorySecretStore();
+    await writeFile(source, JSON.stringify({
+      installed: {
+        client_id: 'test-client-id',
+        client_secret: 'test-secret-value',
+      },
+    }), { mode: 0o600 });
+    const cleanupBlockingKeychain: SecretStore = {
+      get: async (account) => await keychain.get(account),
+      set: async (account, secret) => {
+        await keychain.set(account, secret);
+        await rm(source);
+        await mkdir(source);
+      },
+      delete: async (account) => await keychain.delete(account),
+    };
+
+    try {
+      const auth = new AuthManager(
+        new ConfigStore(join(directory, 'accounts.json')),
+        cleanupBlockingKeychain,
+      );
+      const failure = await auth.importClientFile(source, { deleteSource: true })
+        .then(() => null, (error: unknown) => error);
+      expect(failure).toBeInstanceOf(SwitchboardError);
+      if (!(failure instanceof SwitchboardError)) throw new Error('Expected SwitchboardError.');
+      expect(failure.code).toBe('CREDENTIAL_FILE_CLEANUP_FAILED');
+      expect(failure.recovery).toContain(source);
+      expect(await keychain.get('oauth-client')).not.toBeNull();
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

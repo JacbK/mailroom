@@ -25,3 +25,14 @@ Accepted and fixed every concrete finding:
 - Agent guidance distinguishes transient errors from broken authentication.
 
 The final focused review confirmed the earlier five findings were fixed and found the last three items above, which were also fixed and covered by tests.
+
+## OAuth import follow-up
+
+Claude Opus reviewed the Keychain import and source-deletion boundary after it was added. Its focused bundle omitted the implementation files, so Codex checked each finding against the source instead of treating the review as authoritative.
+
+- Confirmed the Keychain helper's non-zero exit prevents source deletion.
+- Confirmed deletion runs only after the awaited Keychain write.
+- Confirmed deletion failure already exits with `CREDENTIAL_FILE_CLEANUP_FAILED`; the recovery message now includes the exact source path.
+- Added tests proving a failed Keychain write preserves the JSON and a failed cleanup reports the path after storing the credential.
+- Added the plaintext retention warning to the README and security guide.
+- Rejected scanning Downloads in `doctor`; searching unrelated user files would add a privacy cost without improving credential correctness.

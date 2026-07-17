@@ -19,7 +19,7 @@ Clone the private repo, then run:
 
 That installs the Codex and Claude Code plugins, opens Google sign-in twice, verifies both email addresses, and runs the health checks.
 
-Google has one unavoidable setup step. You need a Google Cloud **Desktop app** OAuth client with the Gmail API enabled. If the consent screen is in testing, add both email addresses as test users. `./setup` opens the right page and asks for the downloaded JSON. It stores the OAuth client in macOS Keychain, deletes the downloaded JSON after a successful import, and never puts credentials in this repo.
+Google has one unavoidable setup step. You need a Google Cloud **Desktop app** OAuth client with the Gmail API enabled. If the consent screen is in testing, add both email addresses as test users. `./setup` opens the right page and asks for the downloaded JSON. It stores the OAuth client in macOS Keychain, deletes the downloaded JSON after a successful import, and never puts credentials in this repo. Don't save another copy of that JSON.
 
 Then start a fresh thread and ask things like:
 

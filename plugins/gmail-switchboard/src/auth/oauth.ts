@@ -106,7 +106,7 @@ export class AuthManager {
         throw new SwitchboardError(
           'CREDENTIAL_FILE_CLEANUP_FAILED',
           'The OAuth client is in Keychain, but the downloaded JSON could not be deleted.',
-          'Delete the downloaded OAuth JSON manually. Rerunning setup will keep using the Keychain copy.',
+          `Delete the downloaded OAuth JSON manually at ${path}. Rerunning setup will keep using the Keychain copy.`,
           { cause: error },
         );
       }
