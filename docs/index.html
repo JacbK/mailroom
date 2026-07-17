@@ -9,7 +9,7 @@
     />
     <meta
       name="description"
-      content="Switchboard by Jacob Kieser connects any number of Gmail accounts to Codex and Claude through one local MCP server."
+      content="A small local side project for using all your Gmail accounts from Codex or Claude."
     />
     <title>Switchboard by Jacob Kieser</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -18,39 +18,39 @@
     <main>
       <header class="hero">
         <p class="eyebrow">Switchboard by Jacob Kieser</p>
-        <h1>All your Gmail accounts.<br />One local MCP.</h1>
+        <h1>I wanted one agent for all my Gmail accounts.</h1>
         <p class="lede">
-          Search, read, draft, send, label, archive, and trash email from Codex
-          or Claude. Add as many Gmail accounts as you want.
+          So I made this. It is a small local plugin for Codex and Claude. Add
+          as many accounts as you want, search all of them, or pick one.
         </p>
-        <p>
-          Switchboard by Jacob Kieser is the OAuth identity for the Gmail
-          Switchboard plugin.
-        </p>
+        <p>That is pretty much it.</p>
       </header>
 
       <section>
-        <h2>It stays on your Mac.</h2>
+        <h2>What it actually does</h2>
         <p>
-          OAuth tokens live in macOS Keychain. The MCP runs over local stdio.
-          There is no hosted backend, email database, analytics, or telemetry.
+          Search and read email, make drafts, send or forward stuff, change
+          labels, archive, and move messages to Trash. It only writes when you
+          ask.
         </p>
       </section>
 
       <section>
-        <h2>Every account stays obvious.</h2>
+        <h2>Where your email goes</h2>
         <p>
-          Search one account or all of them. Every message, draft, label, and
-          thread ID includes its account so an action cannot silently land in
-          the wrong inbox.
+          Mostly nowhere. The plugin runs on your Mac. OAuth tokens live in
+          Keychain. There is no hosted backend, database, analytics, or
+          telemetry. When you ask Codex or Claude to work with an email, that
+          email goes to whichever client you picked.
         </p>
       </section>
 
       <section>
-        <h2>Writes are intentional.</h2>
+        <h2>How it avoids the wrong inbox</h2>
         <p>
-          Sending, forwarding, labeling, archiving, and trashing only happen
-          when you ask. Delete means Gmail Trash, never permanent deletion.
+          Every message, draft, label, and thread ID includes its account. The
+          agent never has to guess. Also, trash means Gmail Trash. It cannot
+          permanently delete email.
         </p>
       </section>
 
@@ -60,7 +60,7 @@
           <a href="./terms.html">Terms</a>
           <a href="mailto:jacobk2112@gmail.com">Contact</a>
         </nav>
-        <p>Made by Jacob Kieser.</p>
+        <p>A little side project by Jacob Kieser.</p>
       </footer>
     </main>
   </body>

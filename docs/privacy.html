@@ -4,69 +4,61 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Switchboard by Jacob Kieser privacy policy." />
-    <title>Privacy — Switchboard by Jacob Kieser</title>
+    <title>Privacy | Switchboard by Jacob Kieser</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="legal">
       <a class="back" href="./">← Switchboard by Jacob Kieser</a>
-      <h1>Privacy</h1>
+      <h1>Privacy, basically</h1>
       <p class="updated">Last updated July 17, 2026</p>
 
-      <h2>What the app accesses</h2>
+      <h2>Short version</h2>
       <p>
-        Switchboard by Jacob Kieser, used by the Gmail Switchboard plugin, asks
-        for Gmail access so you can search and read messages, manage labels,
-        create and update drafts, send and forward email, archive messages, and
-        move messages to Trash. It also reads the connected account address so
-        accounts can be identified correctly.
+        This is a side project that runs locally. No backend, no email database,
+        no ads, no analytics, no telemetry, and no selling your data.
       </p>
 
-      <h2>How your data is used</h2>
+      <h2>What it can access</h2>
       <p>
-        Your Gmail data is used only to perform the Gmail actions you request.
-        Gmail Switchboard does not use it for advertising, profiling, sale, or
-        training AI models.
+        You can authorize it to search and read messages, manage labels, create
+        and update drafts, send and forward email, archive messages, and move
+        messages to Trash. It also reads the connected email address so it can
+        tell your accounts apart.
       </p>
+
+      <h2>What leaves your Mac</h2>
       <p>
         When you ask Codex, Claude, or another MCP client to work with email,
-        the requested Gmail data is returned to that client so it can complete
-        your request. That client and its model provider handle the data under
-        their own privacy terms and settings.
+        the email needed for that request goes to the client you picked. That
+        client and its model provider have their own privacy terms and settings.
+        Switchboard does not use Gmail data for ads, profiling, sale, or AI
+        model training.
       </p>
 
-      <h2>Where data is stored</h2>
+      <h2>What gets saved</h2>
       <p>
-        OAuth tokens are stored in your macOS Keychain. Account aliases and
-        non-secret configuration are stored locally on your Mac. Gmail content
-        is not stored on a Gmail Switchboard server because there is no hosted
-        backend. Requested content may exist transiently in your local MCP and
-        client session while a task runs.
+        OAuth tokens go in macOS Keychain. Account names and non-secret config
+        stay on your Mac. Emails are not stored on a Switchboard server because
+        there is no server. Requested email can still exist in your local agent
+        session while a task runs.
       </p>
 
-      <h2>Sharing</h2>
+      <h2>Removing it</h2>
       <p>
-        Gmail Switchboard does not sell your data or share it with advertisers
-        or data brokers. It only transfers the data needed to the MCP client you
-        chose, when you explicitly request a Gmail feature, or when required by
-        law.
+        Disconnect the account and remove its local token. You can also revoke
+        access from your Google Account security settings. Either way, future
+        access stops.
       </p>
 
-      <h2>Control and deletion</h2>
+      <h2>Google's rules</h2>
       <p>
-        You can disconnect an account from Gmail Switchboard and remove its
-        local token at any time. You can also revoke access from your Google
-        Account security settings. Removing the local token ends future access.
+        Use and transfer of information received from Google APIs follows the
+        Google API Services User Data Policy, including its Limited Use
+        requirements.
       </p>
 
-      <h2>Google API data</h2>
-      <p>
-        Gmail Switchboard’s use and transfer of information received from
-        Google APIs follows the Google API Services User Data Policy, including
-        its Limited Use requirements.
-      </p>
-
-      <h2>Contact</h2>
+      <h2>Questions</h2>
       <p><a href="mailto:jacobk2112@gmail.com">jacobk2112@gmail.com</a></p>
     </main>
   </body>
