@@ -52,6 +52,8 @@ Show me which inbox each result came from.
 
 It cannot send, reply, draft, delete, archive, label, or change anything in Gmail. Email text is treated as untrusted data, not agent instructions. Remote images and tracking links are never loaded.
 
+Credentials stay in your Mac's Keychain. Email results you ask to read are passed to Codex or Claude so the agent can answer, which means that content may be processed under that provider's data terms and settings.
+
 ## If something is off
 
 Run `./setup --doctor` first. If an account says `needs_auth`, run `./setup --reauth`. If Google selected the wrong account, nothing is saved. Retry and choose the exact address shown by setup.
