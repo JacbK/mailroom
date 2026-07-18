@@ -1,17 +1,17 @@
 {
-  "name": "gmail-switchboard-workspace",
-  "version": "0.2.1",
+  "name": "mailroom-workspace",
+  "version": "0.3.0",
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm --filter @gmail-switchboard/mcp build",
-    "check": "pnpm --filter @gmail-switchboard/mcp check",
-    "lint": "pnpm --filter @gmail-switchboard/mcp lint",
-    "test": "pnpm --filter @gmail-switchboard/mcp test && node --test scripts/setup-accounts.test.mjs",
-    "test:coverage": "pnpm --filter @gmail-switchboard/mcp test:coverage",
+    "build": "pnpm --filter @mailroom/mcp build",
+    "check": "pnpm --filter @mailroom/mcp check",
+    "lint": "pnpm --filter @mailroom/mcp lint",
+    "test": "pnpm --filter @mailroom/mcp test && node --test scripts/setup-accounts.test.mjs",
+    "test:coverage": "pnpm --filter @mailroom/mcp test:coverage",
     "validate:plugin": "node scripts/validate-plugins.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "verify": "pnpm check && pnpm lint && pnpm test && pnpm build && pnpm validate:plugin && pnpm scan:secrets && pnpm peers check"

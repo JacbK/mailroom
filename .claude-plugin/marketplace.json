@@ -1,16 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "gmail-switchboard-local",
+  "name": "mailroom-local",
   "description": "Jacob's private local plugins.",
   "owner": {
     "name": "Jacob Kieser"
   },
   "plugins": [
     {
-      "name": "gmail-switchboard",
-      "source": "./plugins/gmail-switchboard",
+      "name": "mailroom",
+      "source": "./plugins/mailroom",
       "description": "Search and manage multiple Gmail accounts without mixing them up.",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "category": "productivity",
       "strict": true
     }

@@ -1,14 +1,14 @@
 {
-  "name": "gmail-switchboard-local",
+  "name": "mailroom-local",
   "interface": {
     "displayName": "Mailroom Local"
   },
   "plugins": [
     {
-      "name": "gmail-switchboard",
+      "name": "mailroom",
       "source": {
         "source": "local",
-        "path": "./plugins/gmail-switchboard"
+        "path": "./plugins/mailroom"
       },
       "policy": {
         "installation": "AVAILABLE",

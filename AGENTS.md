@@ -1,4 +1,4 @@
-# Gmail Switchboard Agent Guide
+# Mailroom Agent Guide
 
 Keep the Gmail connector-parity surface working across any number of accounts. Mutations require explicit user intent, every ID stays account-qualified, and delete means recoverable Gmail Trash, never permanent deletion.
 

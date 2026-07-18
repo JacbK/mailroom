@@ -1,6 +1,6 @@
 # Architecture
 
-Gmail Switchboard has one TypeScript MCP server and two thin plugin manifests.
+Mailroom has one TypeScript MCP server and two thin plugin manifests.
 
 ## Runtime
 
@@ -14,7 +14,9 @@ The setup command builds before installing. Generated output is not committed.
 
 ## Accounts and credentials
 
-Non-secret account metadata lives in a mode `0600` config file under the user's application-support directory. The Google OAuth client and per-account refresh tokens live in macOS Keychain under the `gmail-switchboard` service.
+Non-secret account metadata lives in a mode `0600` config file under the user's application-support directory. The Google OAuth client and per-account refresh tokens live in macOS Keychain under the `mailroom` service.
+
+Mailroom moves config and Keychain entries from the old `gmail-switchboard` names the first time it runs after an upgrade.
 
 Each account has a short alias, and there is no fixed account limit. IDs cross the MCP boundary as `<alias>:<gmail-id>`. Raw Gmail IDs are rejected because the same-looking ID cannot safely identify an account.
 

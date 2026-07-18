@@ -1,0 +1,29 @@
+{
+  "name": "mailroom",
+  "version": "0.3.0+codex.20260718220908",
+  "description": "Use multiple Gmail accounts through one local MCP.",
+  "author": {
+    "name": "Jacob Kieser"
+  },
+  "homepage": "https://jacbk.github.io/",
+  "repository": "https://github.com/JacbK/mailroom",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Mailroom",
+    "shortDescription": "Use all your Gmail accounts.",
+    "longDescription": "Search and manage any number of Gmail accounts without mixing them up.",
+    "developerName": "Jacob Kieser",
+    "category": "Productivity",
+    "websiteURL": "https://jacbk.github.io/",
+    "privacyPolicyURL": "https://jacbk.github.io/privacy.html",
+    "termsOfServiceURL": "https://jacbk.github.io/terms.html",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Search and manage all my Gmail accounts."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

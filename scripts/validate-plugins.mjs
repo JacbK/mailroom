@@ -4,32 +4,50 @@ import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const root = resolve(import.meta.dirname, '..');
-const plugin = resolve(root, 'plugins/gmail-switchboard');
+const plugin = resolve(root, 'plugins/mailroom');
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
 function structuralChecks() {
+  const workspacePackage = readJson(resolve(root, 'package.json'));
+  const pluginPackage = readJson(resolve(plugin, 'package.json'));
   const codex = readJson(resolve(plugin, '.codex-plugin/plugin.json'));
   const claude = readJson(resolve(plugin, '.claude-plugin/plugin.json'));
   const mcp = readJson(resolve(plugin, '.mcp.json'));
   const codexMarketplace = readJson(resolve(root, '.agents/plugins/marketplace.json'));
   const claudeMarketplace = readJson(resolve(root, '.claude-plugin/marketplace.json'));
-  if (codex.name !== 'gmail-switchboard' || claude.name !== 'gmail-switchboard') {
-    throw new Error('Plugin manifest names must both be gmail-switchboard.');
+  const claudeMarketplacePlugin = claudeMarketplace.plugins?.find(
+    (item) => item.name === 'mailroom',
+  );
+  if (codex.name !== 'mailroom' || claude.name !== 'mailroom') {
+    throw new Error('Plugin manifest names must both be mailroom.');
   }
-  if (codex.mcpServers !== './.mcp.json' || !mcp.mcpServers?.['gmail-switchboard']) {
+  if (codex.mcpServers !== './.mcp.json' || !mcp.mcpServers?.['mailroom']) {
     throw new Error('Codex manifest must reference the bundled .mcp.json server.');
   }
-  if (!existsSync(resolve(plugin, 'skills/gmail-switchboard/SKILL.md'))) {
-    throw new Error('Gmail Switchboard skill is missing.');
+  if (!existsSync(resolve(plugin, 'skills/mailroom/SKILL.md'))) {
+    throw new Error('Mailroom skill is missing.');
   }
-  if (!codexMarketplace.plugins?.some((item) => item.name === 'gmail-switchboard')) {
+  if (!codexMarketplace.plugins?.some((item) => item.name === 'mailroom')) {
     throw new Error('Codex marketplace entry is missing.');
   }
-  if (!claudeMarketplace.plugins?.some((item) => item.name === 'gmail-switchboard')) {
+  if (!claudeMarketplacePlugin) {
     throw new Error('Claude marketplace entry is missing.');
+  }
+  const versions = [
+    workspacePackage.version,
+    pluginPackage.version,
+    claude.version,
+    claudeMarketplacePlugin.version,
+  ];
+  if (versions.some((version) => version !== pluginPackage.version)) {
+    throw new Error(`Mailroom versions must all match ${pluginPackage.version}.`);
+  }
+  if (codex.version !== pluginPackage.version
+    && !codex.version.startsWith(`${pluginPackage.version}+codex.`)) {
+    throw new Error(`Codex version must use the ${pluginPackage.version} Mailroom release.`);
   }
 }
 

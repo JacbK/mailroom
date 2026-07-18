@@ -1,6 +1,6 @@
 # Security
 
-Gmail Switchboard is local. It can read and change Gmail only through explicit MCP tool calls.
+Mailroom is local. It can read and change Gmail only through explicit MCP tool calls.
 
 ## Boundaries
 
@@ -34,6 +34,6 @@ Google classifies `gmail.modify` as a restricted scope. It allows the connector-
 
 ## Removal
 
-`./setup --uninstall` removes the Codex and Claude plugins and offers to revoke Google access and delete every Keychain credential. Individual accounts can be removed with `./gmail-switchboard auth remove <alias>`.
+`./setup --uninstall` removes the Codex and Claude plugins and offers to revoke Google access and delete every Keychain credential. Individual accounts can be removed with `./mailroom auth remove <alias>`.
 
 The Google OAuth JSON exists in plaintext only between the browser download and the Keychain import. Do not copy it elsewhere, and empty Trash if you manually move a copy there.

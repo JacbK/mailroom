@@ -10,9 +10,11 @@ import {
 } from './setup-accounts.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const cli = resolve(root, 'plugins/gmail-switchboard/dist/cli.js');
-const marketplace = 'gmail-switchboard-local';
-const plugin = `gmail-switchboard@${marketplace}`;
+const cli = resolve(root, 'plugins/mailroom/dist/cli.js');
+const marketplace = 'mailroom-local';
+const plugin = `mailroom@${marketplace}`;
+const legacyMarketplace = 'gmail-switchboard-local';
+const legacyPlugin = `gmail-switchboard@${legacyMarketplace}`;
 const rawArgs = process.argv.slice(2);
 const args = new Set(rawArgs);
 
@@ -73,7 +75,24 @@ function hasClaudeMarketplace() {
   return listing.some((item) => item.name === marketplace);
 }
 
+function removeLegacyPlugin() {
+  run('codex', ['plugin', 'remove', legacyPlugin, '--json'], { allowFailure: true, capture: true });
+  run('claude', ['plugin', 'uninstall', legacyPlugin, '--scope', 'user', '--yes'], {
+    allowFailure: true,
+    capture: true,
+  });
+  run('codex', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
+    allowFailure: true,
+    capture: true,
+  });
+  run('claude', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
+    allowFailure: true,
+    capture: true,
+  });
+}
+
 function installPlugins() {
+  removeLegacyPlugin();
   process.stdout.write('\nInstalling the Codex plugin…\n');
   if (!hasCodexMarketplace()) {
     run('codex', ['plugin', 'marketplace', 'add', root, '--json']);
@@ -107,6 +126,7 @@ function uninstallPlugins() {
     allowFailure: true,
     capture: true,
   });
+  removeLegacyPlugin();
 }
 
 async function ensureOAuthClient() {
@@ -209,7 +229,7 @@ async function main() {
     uninstallPlugins();
     const answer = await ask('Also revoke Gmail access and delete credentials from Keychain? [y/N] ');
     if (/^y(?:es)?$/i.test(answer)) run('node', [cli, 'purge', '--yes']);
-    else process.stdout.write('Credentials were left in Keychain. Run ./gmail-switchboard purge to remove them later.\n');
+    else process.stdout.write('Credentials were left in Keychain. Run ./mailroom purge to remove them later.\n');
     return;
   }
 

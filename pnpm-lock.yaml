@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  plugins/gmail-switchboard:
+  plugins/mailroom:
     dependencies:
       '@googleapis/gmail':
         specifier: 17.0.0
