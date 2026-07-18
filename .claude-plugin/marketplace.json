@@ -10,7 +10,7 @@
       "name": "gmail-switchboard",
       "source": "./plugins/gmail-switchboard",
       "description": "Search and manage multiple Gmail accounts without mixing them up.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "category": "productivity",
       "strict": true
     }

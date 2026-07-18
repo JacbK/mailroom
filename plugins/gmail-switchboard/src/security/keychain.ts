@@ -15,13 +15,13 @@ async function runKeychainHelper(args: string[], input?: string): Promise<Proces
     throw new SwitchboardError(
       'UNSUPPORTED_PLATFORM',
       'Secure credential storage currently requires macOS Keychain.',
-      'Run Gmail Switchboard on macOS. A future release can add another OS credential provider.',
+      'Run Mailroom on macOS. A future release can add another OS credential provider.',
     );
   }
 
   const helper = join(dirname(fileURLToPath(import.meta.url)), 'keychain-helper');
   if (!existsSync(helper)) {
-    throw new Error('Keychain helper is missing. Run `./setup` to rebuild Gmail Switchboard.');
+    throw new Error('Keychain helper is missing. Run `./setup` to rebuild Mailroom.');
   }
 
   return await new Promise((resolve, reject) => {

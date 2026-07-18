@@ -1,7 +1,7 @@
 {
   "name": "gmail-switchboard-local",
   "interface": {
-    "displayName": "Gmail Switchboard Local"
+    "displayName": "Mailroom Local"
   },
   "plugins": [
     {

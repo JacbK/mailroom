@@ -60,7 +60,7 @@ async function createOAuthCallback(expectedState: string): Promise<{
       rejectCode?.(new Error(`OAuth authorization failed: ${error ?? 'missing code'}.`));
       return;
     }
-    response.writeHead(200).end('Gmail Switchboard is connected. You can close this tab.');
+    response.writeHead(200).end('Mailroom is connected. You can close this tab.');
     resolveCode?.(code);
   });
   await new Promise<void>((resolve, reject) => {
@@ -183,7 +183,7 @@ export class AuthManager {
         throw new SwitchboardError(
           'AUTH_REQUIRED',
           'Google did not return an offline refresh token.',
-          'Remove Gmail Switchboard from your Google Account connections, then retry authentication.',
+          'Remove Mailroom from your Google Account connections, then retry authentication.',
         );
       }
       await this.keychain.set(`account:${alias}`, JSON.stringify({

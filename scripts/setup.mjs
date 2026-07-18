@@ -17,7 +17,7 @@ const rawArgs = process.argv.slice(2);
 const args = new Set(rawArgs);
 
 function printUsage() {
-  process.stdout.write(`Gmail Switchboard setup
+  process.stdout.write(`Mailroom setup
 
   ./setup --account work=you@company.com --account personal=you@gmail.com
   ./setup --reauth
@@ -93,7 +93,7 @@ function installPlugins() {
 }
 
 function uninstallPlugins() {
-  process.stdout.write('Removing Gmail Switchboard from Codex and Claude Code…\n');
+  process.stdout.write('Removing Mailroom from Codex and Claude Code…\n');
   run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
   run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
     allowFailure: true,

@@ -10,7 +10,7 @@ elif [[ -x /usr/local/opt/node/bin/node ]]; then
 fi
 
 if [[ ! -f "$repo_dir/plugins/gmail-switchboard/dist/cli.js" ]]; then
-  echo "Gmail Switchboard is not built yet. Run ./setup first." >&2
+  echo "Mailroom is not built yet. Run ./setup first." >&2
   exit 1
 fi
 

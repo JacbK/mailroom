@@ -23,8 +23,8 @@ async function confirm(question: string): Promise<boolean> {
 
 program
   .name('gmail-switchboard')
-  .description('Gmail Switchboard setup and diagnostics.')
-  .version('0.2.0');
+  .description('Mailroom setup and diagnostics.')
+  .version('0.2.1');
 
 client
   .command('set')
@@ -208,7 +208,7 @@ program
     const approved = options.yes || await confirm('Revoke all Gmail access and delete local credentials?');
     if (!approved) throw new Error('Cancelled without changing credentials.');
     await new AuthManager().purge();
-    process.stdout.write('Removed Gmail Switchboard credentials and local account configuration.\n');
+    process.stdout.write('Removed Mailroom credentials and local account configuration.\n');
   });
 
 program.parseAsync().catch((error: unknown) => {

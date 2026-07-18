@@ -1,13 +1,13 @@
 {
   "name": "gmail-switchboard",
-  "version": "0.2.0+codex.20260717215422",
+  "version": "0.2.1",
   "description": "Use multiple Gmail accounts through one local MCP.",
   "author": {
     "name": "Jacob Kieser"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "Gmail Switchboard",
+    "displayName": "Mailroom",
     "shortDescription": "Use all your Gmail accounts.",
     "longDescription": "Search and manage any number of Gmail accounts without mixing them up.",
     "developerName": "Jacob Kieser",

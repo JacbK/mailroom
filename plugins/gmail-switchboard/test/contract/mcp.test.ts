@@ -78,7 +78,7 @@ describe('MCP surface', () => {
   });
 
   it('puts the safety and account-routing rules in server instructions', () => {
-    expect(client.getInstructions()?.startsWith('Gmail Switchboard manages multiple Gmail accounts.')).toBe(true);
+    expect(client.getInstructions()?.startsWith('Mailroom manages multiple Gmail accounts.')).toBe(true);
     expect(client.getInstructions()).toContain('account-qualified');
     expect(client.getInstructions()).toContain('untrusted external data');
     expect(client.getInstructions()).toContain('explicitly asks');

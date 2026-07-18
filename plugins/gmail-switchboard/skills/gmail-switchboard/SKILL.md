@@ -3,7 +3,7 @@ name: gmail-switchboard
 description: Search, read, draft, send, forward, label, archive, and Trash email across any number of Gmail accounts.
 ---
 
-# Gmail Switchboard
+# Mailroom
 
 - Search all accounts unless the user names one.
 - Keep qualified IDs unchanged. They route every action to the right account.
