@@ -33,10 +33,18 @@ client
   .option('--delete-source', 'Delete the JSON file after it is stored in Keychain.')
   .description('Store the OAuth client in Keychain.')
   .action(async (path: string, options: { deleteSource?: boolean }) => {
-    await new AuthManager().importClientFile(path, options);
+    const changed = await new AuthManager().useSelfHostedClient(path, options);
     process.stdout.write(options.deleteSource
-      ? 'Google OAuth client stored in macOS Keychain; source JSON deleted.\n'
-      : 'Google OAuth client stored in macOS Keychain.\n');
+      ? `Self-hosted Google app ${changed ? 'enabled' : 'already active'}; source JSON deleted.\n`
+      : `Self-hosted Google app ${changed ? 'enabled' : 'already active'}.\n`);
+  });
+
+client
+  .command('shared')
+  .description('Use the shared Mailroom Google app.')
+  .action(async () => {
+    const changed = await new AuthManager().useSharedClient();
+    process.stdout.write(`Mailroom shared Google app ${changed ? 'enabled' : 'already active'}.\n`);
   });
 
 client
@@ -44,11 +52,13 @@ client
   .option('--json', 'Print machine-readable JSON')
   .description('Check OAuth client setup.')
   .action(async (options: { json?: boolean }) => {
-    const configured = await new AuthManager().hasClient();
+    const status = await new AuthManager().clientStatus();
     process.stdout.write(options.json
-      ? `${JSON.stringify({ configured })}\n`
-      : `Google OAuth client: ${configured ? 'configured' : 'missing'}\n`);
-    if (!configured) process.exitCode = 2;
+      ? `${JSON.stringify(status)}\n`
+      : `Google OAuth: ${status.ok
+        ? status.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'
+        : 'needs setup'}\n`);
+    if (!status.ok) process.exitCode = 2;
   });
 
 auth
@@ -112,24 +122,26 @@ program
   .action(async (options: { json?: boolean }) => {
     const major = Number(process.versions.node.split('.')[0]);
     const authManager = new AuthManager();
-    const clientConfigured = await authManager.hasClient();
+    const clientStatus = await authManager.clientStatus();
     const accounts = await new GmailService().accounts();
     const report = {
       node: { version: process.versions.node, ok: major >= 22 },
       platform: { value: process.platform, ok: process.platform === 'darwin' },
-      oauth_client: { configured: clientConfigured, ok: clientConfigured },
+      oauth_client: clientStatus,
       account_count: accounts.length,
       accounts,
       ok: major >= 22
         && process.platform === 'darwin'
-        && clientConfigured
+        && clientStatus.ok
         && accounts.length > 0
         && accounts.every((account) => account.status === 'connected'),
     };
     process.stdout.write(options.json ? `${JSON.stringify(report)}\n` : [
       `Node ${report.node.version}: ${report.node.ok ? 'ok' : 'needs Node 22+'}`,
       `macOS Keychain: ${report.platform.ok ? 'ok' : 'unsupported platform'}`,
-      `Google OAuth client: ${clientConfigured ? 'configured' : 'missing'}`,
+      `Google OAuth: ${clientStatus.ok
+        ? clientStatus.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'
+        : 'needs setup'}`,
       ...(accounts.length > 0
         ? accounts.map((account) => `${account.alias} (${account.email}): ${account.status}`)
         : ['Gmail accounts: none configured']),

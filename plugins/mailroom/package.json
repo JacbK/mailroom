@@ -1,6 +1,7 @@
 {
   "name": "@mailroom/mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "engines": {
@@ -14,8 +15,9 @@
     "build": "node esbuild.config.mjs",
     "check": "tsc --noEmit",
     "lint": "eslint src test esbuild.config.mjs",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "node esbuild.config.mjs && vitest run",
+    "test:coverage": "node esbuild.config.mjs && vitest run --coverage",
+    "test:e2e:live": "node esbuild.config.mjs && node scripts/live-e2e.mjs"
   },
   "dependencies": {
     "@googleapis/gmail": "17.0.0",

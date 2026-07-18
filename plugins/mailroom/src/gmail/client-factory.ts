@@ -1,17 +1,21 @@
 import { gmail, type gmail_v1 } from '@googleapis/gmail';
 import { OAuth2Client } from 'google-auth-library';
 import { z } from 'zod';
+import {
+  OAUTH_CLIENT_FINGERPRINT_LENGTH,
+  OAuthClientStore,
+} from '../auth/client-store.js';
 import { MailroomError } from '../errors.js';
 import { KeychainStore, type SecretStore } from '../security/keychain.js';
 import { ConfigStore } from '../storage/config-store.js';
 import type { AccountConfig, AccountCredential, OAuthClientConfig } from '../types.js';
 import { GMAIL_MODIFY_SCOPE } from '../auth/scopes.js';
 
-const clientSchema = z.object({ clientId: z.string().min(1), clientSecret: z.string().min(1) });
 const credentialSchema = z.object({
   email: z.email(),
   refreshToken: z.string().min(1),
   scope: z.literal(GMAIL_MODIFY_SCOPE),
+  clientFingerprint: z.string().length(OAUTH_CLIENT_FINGERPRINT_LENGTH),
 });
 
 export interface GmailConnection {
@@ -20,34 +24,25 @@ export interface GmailConnection {
 }
 
 export class GmailClientFactory {
+  private readonly clients: OAuthClientStore;
+
   public constructor(
     private readonly config = new ConfigStore(),
     private readonly keychain: SecretStore = new KeychainStore(),
-  ) {}
+  ) {
+    this.clients = new OAuthClientStore(keychain);
+  }
 
   public async getClientConfig(): Promise<OAuthClientConfig> {
-    const raw = await this.keychain.get('oauth-client');
-    if (!raw) {
-      throw new MailroomError(
-        'AUTH_REQUIRED',
-        'No Google OAuth client is configured.',
-        'Run `./setup` and provide a Google Desktop OAuth client JSON file.',
-      );
-    }
-    try {
-      return clientSchema.parse(JSON.parse(raw));
-    } catch (error) {
-      throw new MailroomError(
-        'AUTH_REQUIRED',
-        'The Google OAuth client stored in Keychain is invalid.',
-        'Run `./setup --reauth` and replace the OAuth client configuration.',
-        { cause: error },
-      );
-    }
+    return (await this.clients.getActiveClient()).client;
   }
 
   public async getCredential(alias: string): Promise<AccountCredential> {
-    const raw = await this.keychain.get(`account:${alias}`);
+    const selection = await this.clients.getSelection();
+    const key = this.clients.credentialKey(selection, alias);
+    const current = await this.keychain.get(key);
+    const legacy = current ? null : await this.keychain.get(`account:${alias}`);
+    const raw = current ?? legacy;
     if (!raw) {
       throw new MailroomError(
         'AUTH_REQUIRED',
@@ -70,6 +65,7 @@ export class GmailClientFactory {
       email: z.email(),
       refreshToken: z.string().min(1),
       scope: z.string().optional(),
+      clientFingerprint: z.string().optional(),
     }).safeParse(parsed);
     if (priorCredential.success && priorCredential.data.scope !== GMAIL_MODIFY_SCOPE) {
       throw new MailroomError(
@@ -79,8 +75,26 @@ export class GmailClientFactory {
       );
     }
     try {
-      return credentialSchema.parse(parsed);
+      const credential = credentialSchema.parse({
+        ...(priorCredential.success ? priorCredential.data : {}),
+        clientFingerprint: priorCredential.success
+          ? priorCredential.data.clientFingerprint ?? selection.fingerprint
+          : undefined,
+      });
+      if (credential.clientFingerprint !== selection.fingerprint) {
+        throw new MailroomError(
+          'AUTH_REQUIRED',
+          `The "${alias}" Gmail account belongs to a different OAuth app.`,
+          `Run \`./mailroom auth reauth ${alias}\`.`,
+        );
+      }
+      if (legacy) {
+        await this.keychain.set(key, JSON.stringify(credential));
+        await this.keychain.delete(`account:${alias}`);
+      }
+      return credential;
     } catch (error) {
+      if (error instanceof MailroomError) throw error;
       throw new MailroomError(
         'AUTH_REQUIRED',
         `The "${alias}" credential stored in Keychain is invalid.`,

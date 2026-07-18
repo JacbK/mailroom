@@ -14,7 +14,9 @@ The setup command builds before installing. Generated output is not committed.
 
 ## Accounts and credentials
 
-Non-secret account metadata lives in a mode `0600` config file under the user's application-support directory. The Google OAuth client and per-account refresh tokens live in macOS Keychain under the `mailroom` service.
+Non-secret account metadata lives in a mode `0600` config file under the user's application-support directory. New installs use the bundled Mailroom Desktop OAuth client. A self-hosted client and every refresh token live in macOS Keychain under the `mailroom` service.
+
+OAuth clients and account tokens are keyed by a client fingerprint. A switch authorizes every account against the target app before changing the active selection, so a failed sign-in leaves the old setup working.
 
 Mailroom moves config and Keychain entries from the old `gmail-switchboard` names the first time it runs after an upgrade.
 

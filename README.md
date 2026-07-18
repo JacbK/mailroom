@@ -7,7 +7,16 @@ It does the same stuff as the normal Gmail connector across however many account
 Paste this into Codex:
 
 ```text
-Install Mailroom from https://github.com/JacbK/mailroom. Ask me which Gmail accounts I want to add and what to call them. Keep going until it works in Codex and Claude and ./setup --doctor is healthy. I'll handle the Google sign-ins.
+Install or safely update Mailroom from https://github.com/JacbK/mailroom in ~/.mailroom. Ask which Gmail accounts I want to add. Use the shared Google app, install it in Codex and/or Claude Code, and keep going until ~/.mailroom/setup --doctor is healthy. I'll handle Google sign-ins.
 ```
 
 Start a new task when setup finishes.
+
+Want your own Google app instead?
+
+```sh
+git clone https://github.com/JacbK/mailroom.git ~/.mailroom
+~/.mailroom/setup --self-host ~/Downloads/google-oauth.json
+```
+
+[Self-hosting details](docs/self-hosting.md)

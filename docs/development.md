@@ -5,8 +5,8 @@ Requirements: macOS, Node 22 or newer, pnpm 11, Codex, and Claude Code.
 ```sh
 pnpm install --frozen-lockfile
 pnpm verify
-pnpm test:coverage
-pnpm audit --audit-level high
+# Release only:
+pnpm release:check
 ```
 
 The official Codex plugin-creator validator runs when it is installed. Claude's strict plugin validator runs when the Claude CLI is installed. CI always runs structural validation too.
@@ -21,6 +21,8 @@ Useful source areas:
 - `test/contract`: mocked Gmail and in-memory MCP tests
 
 Do not add scopes beyond `gmail.modify` or a permanent-delete tool. Do not put real email bodies, headers, OAuth responses, or attachment data into fixtures.
+
+The live suite is a release-only local check. It uses the configured `personal` and `work` accounts, sends uniquely marked mail only between them, and moves the test mail to Trash. Never put their refresh tokens in CI.
 
 Current reference docs:
 

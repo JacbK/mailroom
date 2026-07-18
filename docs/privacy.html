@@ -30,6 +30,17 @@
 
       <div class="legal-grid">
         <section class="card">
+          <h2>Google Limited Use</h2>
+          <p>
+            Mailroom's use and transfer of information received from Google APIs
+            follows the
+            <a href="https://developers.google.com/terms/api-services-user-data-policy"
+              >Google API Services User Data Policy</a
+            >, including its Limited Use requirements.
+          </p>
+        </section>
+
+        <section class="card">
           <h2>Short version</h2>
           <p>
             Mailroom runs locally. No hosted backend, no email database, no
@@ -60,27 +71,20 @@
         <section class="card">
           <h2>What gets saved</h2>
           <p>
-            OAuth tokens go in macOS Keychain. Account names and non-secret
-            config stay on your Mac. Requested email can still exist in your
-            local agent session while a task runs.
+            The Mailroom Google app ID ships with the plugin. It cannot access
+            your account by itself. Your OAuth tokens go in macOS Keychain.
+            Account names and non-secret config stay on your Mac. Requested
+            email can still exist in your local agent session while a task runs.
           </p>
         </section>
 
         <section class="card">
           <h2>Removing it</h2>
           <p>
-            Disconnect the account and remove its local token. You can also
-            revoke access from your Google Account security settings. Either
-            way, future access stops.
-          </p>
-        </section>
-
-        <section class="card">
-          <h2>Google's rules</h2>
-          <p>
-            Use and transfer of information received from Google APIs follows
-            the Google API Services User Data Policy, including its Limited Use
-            requirements.
+            Run <code>./setup --uninstall</code> to remove the plugin and choose
+            whether to revoke its tokens, or disconnect one account with
+            <code>./mailroom auth remove &lt;alias&gt;</code>. You can also revoke
+            Mailroom from your Google Account security settings.
           </p>
         </section>
       </div>

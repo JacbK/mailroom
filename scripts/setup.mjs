@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync, spawn } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { dirname, resolve } from 'node:path';
@@ -10,7 +10,9 @@ import {
 } from './setup-accounts.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const cli = resolve(root, 'plugins/mailroom/dist/cli.js');
+const cli = process.env.MAILROOM_SETUP_TEST === '1' && process.env.MAILROOM_SETUP_CLI
+  ? resolve(process.env.MAILROOM_SETUP_CLI)
+  : resolve(root, 'plugins/mailroom/dist/cli.js');
 const marketplace = 'mailroom-local';
 const plugin = `mailroom@${marketplace}`;
 const legacyMarketplace = 'gmail-switchboard-local';
@@ -18,16 +20,34 @@ const legacyPlugin = `gmail-switchboard@${legacyMarketplace}`;
 const rawArgs = process.argv.slice(2);
 const args = new Set(rawArgs);
 
+function optionValue(name) {
+  const inline = rawArgs.find((value) => value.startsWith(`${name}=`));
+  const index = rawArgs.indexOf(name);
+  if (inline && index !== -1) throw new Error(`${name} can only be supplied once.`);
+  if (inline) return inline.slice(name.length + 1);
+  if (index === -1) return null;
+  const value = rawArgs[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} needs a file path.`);
+  return value;
+}
+
 function printUsage() {
   process.stdout.write(`Mailroom setup
 
   ./setup --account work=you@company.com --account personal=you@gmail.com
+  ./setup --self-host /path/to/google-oauth.json
+  ./setup --shared
   ./setup --reauth
   ./setup --doctor
   ./setup --uninstall
 
 Repeat --account as many times as you need.
 `);
+}
+
+function commandExists(command) {
+  const result = spawnSync(command, ['--version'], { encoding: 'utf8', stdio: 'ignore' });
+  return result.status === 0;
 }
 
 function run(command, commandArgs, options = {}) {
@@ -59,12 +79,6 @@ async function ask(question) {
   }
 }
 
-function open(url) {
-  if (process.platform !== 'darwin') return;
-  const child = spawn('/usr/bin/open', [url], { detached: true, stdio: 'ignore' });
-  child.unref();
-}
-
 function hasCodexMarketplace() {
   const listing = json('codex', ['plugin', 'marketplace', 'list', '--json']);
   return listing.marketplaces.some((item) => item.name === marketplace);
@@ -76,82 +90,96 @@ function hasClaudeMarketplace() {
 }
 
 function removeLegacyPlugin() {
-  run('codex', ['plugin', 'remove', legacyPlugin, '--json'], { allowFailure: true, capture: true });
-  run('claude', ['plugin', 'uninstall', legacyPlugin, '--scope', 'user', '--yes'], {
-    allowFailure: true,
-    capture: true,
-  });
-  run('codex', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
-    allowFailure: true,
-    capture: true,
-  });
-  run('claude', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
-    allowFailure: true,
-    capture: true,
-  });
+  if (commandExists('codex')) {
+    run('codex', ['plugin', 'remove', legacyPlugin, '--json'], { allowFailure: true, capture: true });
+    run('codex', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
+  if (commandExists('claude')) {
+    run('claude', ['plugin', 'uninstall', legacyPlugin, '--scope', 'user', '--yes'], {
+      allowFailure: true,
+      capture: true,
+    });
+    run('claude', ['plugin', 'marketplace', 'remove', legacyMarketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
 }
 
 function installPlugins() {
+  const hasCodex = commandExists('codex');
+  const hasClaude = commandExists('claude');
+  if (!hasCodex && !hasClaude) {
+    throw new Error('Install Codex or Claude Code, then rerun ./setup.');
+  }
   removeLegacyPlugin();
-  process.stdout.write('\nInstalling the Codex plugin…\n');
-  if (!hasCodexMarketplace()) {
-    run('codex', ['plugin', 'marketplace', 'add', root, '--json']);
+  if (hasCodex) {
+    process.stdout.write('\nInstalling the Codex plugin…\n');
+    if (!hasCodexMarketplace()) {
+      run('codex', ['plugin', 'marketplace', 'add', root, '--json']);
+    }
+    run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
+    run('codex', ['plugin', 'add', plugin, '--json']);
   }
-  run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
-  run('codex', ['plugin', 'add', plugin, '--json']);
 
-  process.stdout.write('\nInstalling the Claude Code plugin…\n');
-  if (!hasClaudeMarketplace()) {
-    run('claude', ['plugin', 'marketplace', 'add', root, '--scope', 'user']);
+  if (hasClaude) {
+    process.stdout.write('\nInstalling the Claude Code plugin…\n');
+    if (!hasClaudeMarketplace()) {
+      run('claude', ['plugin', 'marketplace', 'add', root, '--scope', 'user']);
+    }
+    run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
+      allowFailure: true,
+      capture: true,
+    });
+    run('claude', ['plugin', 'install', plugin, '--scope', 'user']);
   }
-  run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
-    allowFailure: true,
-    capture: true,
-  });
-  run('claude', ['plugin', 'install', plugin, '--scope', 'user']);
 }
 
 function uninstallPlugins() {
   process.stdout.write('Removing Mailroom from Codex and Claude Code…\n');
-  run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
-  run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
-    allowFailure: true,
-    capture: true,
-  });
-  run('codex', ['plugin', 'marketplace', 'remove', marketplace], {
-    allowFailure: true,
-    capture: true,
-  });
-  run('claude', ['plugin', 'marketplace', 'remove', marketplace], {
-    allowFailure: true,
-    capture: true,
-  });
+  if (commandExists('codex')) {
+    run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
+    run('codex', ['plugin', 'marketplace', 'remove', marketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
+  if (commandExists('claude')) {
+    run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
+      allowFailure: true,
+      capture: true,
+    });
+    run('claude', ['plugin', 'marketplace', 'remove', marketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
   removeLegacyPlugin();
 }
 
-async function ensureOAuthClient() {
-  const status = json('node', [cli, 'client', 'status', '--json'], { allowFailure: true });
-  if (status?.configured) return;
-
-  process.stdout.write(`
-Google setup:
-1. Enable the Gmail API.
-2. Configure OAuth consent. If testing, add each account as a test user.
-3. Create and download a Desktop OAuth client.
-
-The JSON moves to Keychain, then is deleted.
-
-`);
-  open('https://console.cloud.google.com/apis/credentials');
-  const path = await ask('Path to the downloaded Desktop OAuth JSON: ');
-  if (!path) {
-    throw new Error('OAuth setup needs the downloaded Desktop client JSON. Rerun ./setup when it is ready.');
+function ensureOAuthClient() {
+  const selfHosted = optionValue('--self-host');
+  if (selfHosted && args.has('--shared')) {
+    throw new Error('Choose either --shared or --self-host, not both.');
   }
-  run('node', [cli, 'client', 'set', path, '--delete-source']);
+  if (selfHosted) {
+    run(process.execPath, [cli, 'client', 'set', selfHosted, '--delete-source']);
+  } else if (args.has('--shared')) {
+    run(process.execPath, [cli, 'client', 'shared']);
+  } else {
+    const status = json(process.execPath, [cli, 'client', 'status', '--json'], { allowFailure: true });
+    if (!status?.ok) {
+      throw new Error('Google OAuth needs repair. Run ./setup --shared or ./setup --self-host <oauth-json>.');
+    }
+    process.stdout.write(`Google OAuth: ${status.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'}\n`);
+  }
 }
 
 function accountListing() {
-  const listing = json('node', [cli, 'auth', 'list', '--json'], { allowFailure: true });
+  const listing = json(process.execPath, [cli, 'auth', 'list', '--json'], { allowFailure: true });
   return listing?.accounts ?? [];
 }
 
@@ -184,11 +212,11 @@ async function ensureAccounts(requested, forceReauth = false) {
     const matchingAlias = assertAccountRequestAvailable(account, current);
     if (matchingAlias) {
       if (forceReauth || matchingAlias.status !== 'connected') {
-        run('node', [cli, 'auth', 'reauth', account.alias]);
+        run(process.execPath, [cli, 'auth', 'reauth', account.alias]);
       }
       matchingAlias.status = 'connected';
     } else {
-      run('node', [cli, 'auth', 'add', account.alias, account.email]);
+      run(process.execPath, [cli, 'auth', 'add', account.alias, account.email]);
       current.push({ ...account, status: 'connected' });
     }
     handled.add(account.alias);
@@ -198,19 +226,28 @@ async function ensureAccounts(requested, forceReauth = false) {
     const shouldReconnect = forceReauth
       || (desired.length === 0 && account.status === 'needs_auth');
     if (!handled.has(account.alias) && shouldReconnect) {
-      run('node', [cli, 'auth', 'reauth', account.alias]);
+      run(process.execPath, [cli, 'auth', 'reauth', account.alias]);
     }
   }
 }
 
 function printInstallStatus() {
-  const codex = json('codex', ['plugin', 'list', '--json']);
-  const claude = run('claude', ['plugin', 'list'], { capture: true }).stdout;
-  const codexInstalled = codex.installed.some((item) => item.pluginId === plugin);
-  const claudeInstalled = claude.includes(plugin);
-  process.stdout.write(`Codex plugin: ${codexInstalled ? 'installed' : 'missing'}\n`);
-  process.stdout.write(`Claude Code plugin: ${claudeInstalled ? 'installed' : 'missing'}\n`);
-  if (!codexInstalled || !claudeInstalled) process.exitCode = 2;
+  let healthy = false;
+  if (commandExists('codex')) {
+    const codex = json('codex', ['plugin', 'list', '--json']);
+    const installed = codex.installed.some((item) => item.pluginId === plugin);
+    process.stdout.write(`Codex plugin: ${installed ? 'installed' : 'missing'}\n`);
+    healthy ||= installed;
+    if (!installed) process.exitCode = 2;
+  }
+  if (commandExists('claude')) {
+    const claude = run('claude', ['plugin', 'list'], { capture: true }).stdout;
+    const installed = claude.includes(plugin);
+    process.stdout.write(`Claude Code plugin: ${installed ? 'installed' : 'missing'}\n`);
+    healthy ||= installed;
+    if (!installed) process.exitCode = 2;
+  }
+  if (!healthy) process.exitCode = 2;
 }
 
 async function main() {
@@ -221,23 +258,23 @@ async function main() {
 
   if (args.has('--doctor')) {
     printInstallStatus();
-    run('node', [cli, 'doctor']);
+    run(process.execPath, [cli, 'doctor']);
     return;
   }
 
   if (args.has('--uninstall')) {
     uninstallPlugins();
     const answer = await ask('Also revoke Gmail access and delete credentials from Keychain? [y/N] ');
-    if (/^y(?:es)?$/i.test(answer)) run('node', [cli, 'purge', '--yes']);
+    if (/^y(?:es)?$/i.test(answer)) run(process.execPath, [cli, 'purge', '--yes']);
     else process.stdout.write('Credentials were left in Keychain. Run ./mailroom purge to remove them later.\n');
     return;
   }
 
   const requested = requestedAccounts(rawArgs);
   installPlugins();
-  await ensureOAuthClient();
+  ensureOAuthClient();
   await ensureAccounts(requested, args.has('--reauth'));
-  run('node', [cli, 'doctor']);
+  run(process.execPath, [cli, 'doctor']);
   printInstallStatus();
 
   process.stdout.write('\nDone. Start a new Codex or Claude Code task.\n');

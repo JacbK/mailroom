@@ -16,6 +16,10 @@ const patterns = [
   /gh[opusr]_[A-Za-z0-9]{30,}/,
   /"client_secret"\s*:\s*"[^"<]{12,}"/,
 ];
+const installedClientPattern = /GOCSPX-[A-Za-z0-9_-]{20,}/;
+const installedClientAllowlist = new Set([
+  'plugins/mailroom/src/auth/shared-client.ts',
+]);
 
 const findings = [];
 for (const name of names) {
@@ -28,6 +32,9 @@ for (const name of names) {
   }
   for (const pattern of patterns) {
     if (pattern.test(content)) findings.push(`${name}: matched ${pattern.source}`);
+  }
+  if (installedClientPattern.test(content) && !installedClientAllowlist.has(name)) {
+    findings.push(`${name}: unexpected Google Desktop OAuth client`);
   }
 }
 

@@ -7,11 +7,19 @@ export interface AccountCredential {
   email: string;
   refreshToken: string;
   scope: string;
+  clientFingerprint: string;
 }
 
 export interface OAuthClientConfig {
   clientId: string;
   clientSecret: string;
+}
+
+export type OAuthMode = 'shared' | 'self-hosted';
+
+export interface OAuthClientSelection {
+  mode: OAuthMode;
+  fingerprint: string;
 }
 
 export interface AttachmentInfo {

@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = resolve(import.meta.dirname, '..');
 const plugin = resolve(root, 'plugins/mailroom');
+const requireExternalValidators = process.env.MAILROOM_REQUIRE_PLUGIN_VALIDATORS === '1';
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
@@ -66,13 +67,28 @@ const codexValidator = resolve(
   '.codex/skills/.system/plugin-creator/scripts/validate_plugin.py',
 );
 if (existsSync(codexValidator)) {
-  const result = spawnSync('python3', [codexValidator, plugin], { cwd: root, stdio: 'inherit' });
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  const python = [
+    process.env.MAILROOM_PYTHON,
+    '/usr/local/bin/python3',
+    '/opt/homebrew/bin/python3',
+    'python3',
+  ].filter(Boolean).find((candidate) => (
+    spawnSync(candidate, ['-c', 'import yaml'], { stdio: 'ignore' }).status === 0
+  ));
+  if (python) {
+    const result = spawnSync(python, [codexValidator, plugin], { cwd: root, stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status ?? 1);
+  } else {
+    if (requireExternalValidators) throw new Error('Codex plugin validation needs Python with PyYAML.');
+    process.stdout.write('Codex validator needs PyYAML; structural validation passed.\n');
+  }
 } else {
+  if (requireExternalValidators) throw new Error('Codex plugin-creator validator is not installed.');
   process.stdout.write('Codex plugin-creator validator not installed; structural validation passed.\n');
 }
 
 if (!runIfAvailable('claude', ['plugin', 'validate', '--strict', plugin])) {
+  if (requireExternalValidators) throw new Error('Claude CLI is required for release validation.');
   process.stdout.write('Claude CLI not installed; structural Claude validation passed.\n');
 }
 
