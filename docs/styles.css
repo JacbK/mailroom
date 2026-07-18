@@ -74,6 +74,15 @@ main {
   text-decoration: none;
 }
 
+.github-stars {
+  display: flex;
+  height: 20px;
+}
+
+.github-stars iframe {
+  display: block;
+}
+
 .nav-link,
 .text-link {
   color: var(--muted);
