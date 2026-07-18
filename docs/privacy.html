@@ -3,63 +3,96 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Switchboard by Jacob Kieser privacy policy." />
-    <title>Privacy | Switchboard by Jacob Kieser</title>
+    <meta name="description" content="Mailroom by Jacob Kieser privacy policy." />
+    <title>Privacy | Mailroom by Jacob Kieser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="legal">
-      <a class="back" href="./">← Switchboard by Jacob Kieser</a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="logo" href="./">Mailroom</a>
+      <a class="nav-link" href="./terms.html">Terms</a>
+    </nav>
+
+    <main class="legal-page">
+      <p class="hero-label">Mailroom by Jacob Kieser</p>
       <h1>Privacy, basically</h1>
-      <p class="updated">Last updated July 17, 2026</p>
-
-      <h2>Short version</h2>
-      <p>
-        This is a side project that runs locally. No backend, no email database,
-        no ads, no analytics, no telemetry, and no selling your data.
+      <p class="legal-intro">
+        This is a side project. I did not want email sitting on some random
+        server, so it does not.
       </p>
+      <p class="updated">Last updated July 18, 2026</p>
 
-      <h2>What it can access</h2>
-      <p>
-        You can authorize it to search and read messages, manage labels, create
-        and update drafts, send and forward email, archive messages, and move
-        messages to Trash. It also reads the connected email address so it can
-        tell your accounts apart.
-      </p>
+      <div class="legal-grid">
+        <section class="card">
+          <h2>Short version</h2>
+          <p>
+            Mailroom runs locally. No hosted backend, no email database, no
+            ads, no analytics, no telemetry, and no selling your data.
+          </p>
+        </section>
 
-      <h2>What leaves your Mac</h2>
-      <p>
-        When you ask Codex, Claude, or another MCP client to work with email,
-        the email needed for that request goes to the client you picked. That
-        client and its model provider have their own privacy terms and settings.
-        Switchboard does not use Gmail data for ads, profiling, sale, or AI
-        model training.
-      </p>
+        <section class="card">
+          <h2>What it can access</h2>
+          <p>
+            You can let it search and read messages, manage labels, make and
+            update drafts, send and forward email, archive, and move messages
+            to Trash. It also reads the account email so it can tell inboxes
+            apart.
+          </p>
+        </section>
 
-      <h2>What gets saved</h2>
-      <p>
-        OAuth tokens go in macOS Keychain. Account names and non-secret config
-        stay on your Mac. Emails are not stored on a Switchboard server because
-        there is no server. Requested email can still exist in your local agent
-        session while a task runs.
-      </p>
+        <section class="card">
+          <h2>What leaves your Mac</h2>
+          <p>
+            When you ask Codex, Claude, or another MCP client to work with an
+            email, the email needed for that request goes to the client you
+            picked. Their privacy terms and settings apply. Mailroom does not
+            use Gmail data for ads, profiling, sale, or AI model training.
+          </p>
+        </section>
 
-      <h2>Removing it</h2>
-      <p>
-        Disconnect the account and remove its local token. You can also revoke
-        access from your Google Account security settings. Either way, future
-        access stops.
-      </p>
+        <section class="card">
+          <h2>What gets saved</h2>
+          <p>
+            OAuth tokens go in macOS Keychain. Account names and non-secret
+            config stay on your Mac. Requested email can still exist in your
+            local agent session while a task runs.
+          </p>
+        </section>
 
-      <h2>Google's rules</h2>
-      <p>
-        Use and transfer of information received from Google APIs follows the
-        Google API Services User Data Policy, including its Limited Use
-        requirements.
-      </p>
+        <section class="card">
+          <h2>Removing it</h2>
+          <p>
+            Disconnect the account and remove its local token. You can also
+            revoke access from your Google Account security settings. Either
+            way, future access stops.
+          </p>
+        </section>
 
-      <h2>Questions</h2>
-      <p><a href="mailto:jacobk2112@gmail.com">jacobk2112@gmail.com</a></p>
+        <section class="card">
+          <h2>Google's rules</h2>
+          <p>
+            Use and transfer of information received from Google APIs follows
+            the Google API Services User Data Policy, including its Limited Use
+            requirements.
+          </p>
+        </section>
+      </div>
     </main>
+
+    <footer>
+      <div class="footer-inner">
+        <a href="./">Mailroom</a>
+        <nav aria-label="Contact">
+          <a href="mailto:jacobk2112@gmail.com">Questions? Email me</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

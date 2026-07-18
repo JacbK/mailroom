@@ -3,44 +3,72 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Switchboard by Jacob Kieser terms of service." />
-    <title>Terms | Switchboard by Jacob Kieser</title>
+    <meta name="description" content="Mailroom by Jacob Kieser terms of service." />
+    <title>Terms | Mailroom by Jacob Kieser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="legal">
-      <a class="back" href="./">← Switchboard by Jacob Kieser</a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="logo" href="./">Mailroom</a>
+      <a class="nav-link" href="./privacy.html">Privacy</a>
+    </nav>
+
+    <main class="legal-page">
+      <p class="hero-label">Mailroom by Jacob Kieser</p>
       <h1>Terms, also basically</h1>
-      <p class="updated">Last updated July 17, 2026</p>
+      <p class="legal-intro">Use your own accounts and check things before sending them.</p>
+      <p class="updated">Last updated July 18, 2026</p>
 
-      <h2>Use your own accounts</h2>
-      <p>
-        Only connect Gmail accounts you own or are allowed to use. Do not use
-        this to access someone else's account or break any law, Google policy,
-        or provider terms.
-      </p>
+      <div class="legal-grid">
+        <section class="card">
+          <h2>Use your own accounts</h2>
+          <p>
+            Only connect Gmail accounts you own or are allowed to use. Do not
+            use this to access someone else's account or break any law, Google
+            policy, or provider terms.
+          </p>
+        </section>
 
-      <h2>Check before it sends stuff</h2>
-      <p>
-        Email writes are real. Check the message, recipient, draft, and mailbox
-        change before asking your client to do it.
-      </p>
+        <section class="card">
+          <h2>Check before it sends stuff</h2>
+          <p>
+            Email writes are real. Check the message, recipient, draft, and
+            mailbox change before asking your client to do it.
+          </p>
+        </section>
 
-      <h2>No promises</h2>
-      <p>
-        This is a side project provided as-is. To the extent the law allows, I
-        am not liable for lost data, missed email, sent email, account
-        restrictions, or other damage caused by using it.
-      </p>
+        <section class="card">
+          <h2>No promises</h2>
+          <p>
+            This is a side project provided as-is. To the extent the law
+            allows, I am not liable for lost data, missed email, sent email,
+            account restrictions, or other damage caused by using it.
+          </p>
+        </section>
 
-      <h2>Changes</h2>
-      <p>
-        These terms might change as the project changes. The current version
-        will stay here with the updated date.
-      </p>
-
-      <h2>Questions</h2>
-      <p><a href="mailto:jacobk2112@gmail.com">jacobk2112@gmail.com</a></p>
+        <section class="card">
+          <h2>Changes</h2>
+          <p>
+            These terms might change as the project changes. The current
+            version will stay here with the updated date.
+          </p>
+        </section>
+      </div>
     </main>
+
+    <footer>
+      <div class="footer-inner">
+        <a href="./">Mailroom</a>
+        <nav aria-label="Contact">
+          <a href="mailto:jacobk2112@gmail.com">Questions? Email me</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>
