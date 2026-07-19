@@ -8,13 +8,13 @@ Release gate for the shared Mailroom Google app.
 - App: `Mailroom by Jacob Kieser`
 - Audience: External, In production
 - Scope: `https://www.googleapis.com/auth/gmail.modify`
-- Homepage: `https://jacbk.github.io/`
-- Privacy: `https://jacbk.github.io/privacy.html`
-- Terms: `https://jacbk.github.io/terms.html`
+- Homepage: `https://jacbk.github.io/mailroom/`
+- Privacy: `https://jacbk.github.io/mailroom/privacy.html`
+- Terms: `https://jacbk.github.io/mailroom/terms.html`
 
 ## Before submission
 
-1. Verify `https://jacbk.github.io/` in Google Search Console with the meta tag already present on the homepage.
+1. Verify `https://jacbk.github.io/mailroom/` in Google Search Console with the meta tag already present on the homepage.
 2. Request branding re-verification and confirm the ownership issue is gone.
 3. Keep the Desktop client used by `shared-client.ts`, rename it `Mailroom Desktop`, and delete the unused Desktop client.
 4. Run `pnpm release:check` locally.
