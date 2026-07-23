@@ -20,7 +20,7 @@ Do not change repository visibility until the shared Google app is approved for 
 - [x] Enable automatic deletion of merged branches.
 - [x] Disable unused Projects and Wiki.
 - [ ] After the repository is public, enable private vulnerability reporting, secret scanning, and push protection. These are unavailable on the current private-repository plan.
-- [ ] Protect `main`; require the new CI matrix and disallow force pushes after its first successful run.
+- [x] Protect `main`; require the Ubuntu Node 22/24/26 and macOS Node 24 CI checks, require linear history, and disallow force pushes and branch deletion.
 
 ## First release
 
