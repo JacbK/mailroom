@@ -20,7 +20,7 @@ await Promise.all([
 ]);
 
 if (process.platform === 'darwin') {
-  execFileSync('xcrun', [
+  const swiftArguments = [
     'swiftc',
     'src/security/keychain-helper.swift',
     '-framework',
@@ -28,5 +28,12 @@ if (process.platform === 'darwin') {
     '-O',
     '-o',
     'dist/keychain-helper',
-  ], { stdio: 'inherit' });
+  ];
+  const appleSilicon = execFileSync('/usr/sbin/sysctl', ['-in', 'hw.optional.arm64'], {
+    encoding: 'utf8',
+  }).trim() === '1';
+  const command = appleSilicon ? '/usr/bin/arch' : 'xcrun';
+  const arguments_ = appleSilicon ? ['-arm64', 'xcrun', ...swiftArguments] : swiftArguments;
+
+  execFileSync(command, arguments_, { stdio: 'inherit', timeout: 60_000 });
 }

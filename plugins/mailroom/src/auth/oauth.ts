@@ -25,6 +25,13 @@ export type OAuthGrant = (
 ) => Promise<AccountCredential>;
 
 const OAUTH_TIMEOUT_MS = 15 * 60 * 1_000;
+const SHARED_OAUTH_DENIALS = [
+  'access_denied',
+  'admin_policy_enforced',
+  'disallowed_useragent',
+  'org_internal',
+  'rate_limit_exceeded',
+];
 
 const clientFileSchema = z.object({
   installed: z.object({
@@ -338,6 +345,8 @@ export class AuthManager {
         scope: GMAIL_MODIFY_SCOPE,
         clientFingerprint: selection.fingerprint,
       };
+    } catch (error) {
+      throw normalizeOAuthFailure(error, selection.mode);
     } finally {
       await callback.close();
     }
@@ -372,6 +381,18 @@ export class AuthManager {
       );
     }
   }
+}
+
+export function normalizeOAuthFailure(error: unknown, mode: OAuthMode): unknown {
+  if (error instanceof MailroomError || mode !== 'shared') return error;
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+  if (!SHARED_OAUTH_DENIALS.some((reason) => message.includes(reason))) return error;
+  return new MailroomError(
+    'AUTH_REQUIRED',
+    'Google did not allow Mailroom to finish sign-in.',
+    'If you cancelled, rerun setup. If Google says Mailroom is blocked or unverified, use `./setup --self-host <oauth-json>`.',
+    { cause: error },
+  );
 }
 
 export function assertExpectedIdentity(actual: string | null | undefined, expected: string): string {

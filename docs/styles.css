@@ -15,6 +15,7 @@
   --border: oklch(85% 0.025 244);
   --link: oklch(49% 0.16 260);
   --accent: oklch(59% 0.19 28);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 html {
@@ -32,9 +33,8 @@ body {
 }
 
 .home-page {
-  height: 100svh;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 100svh;
+  overflow-x: hidden;
 }
 
 a {
@@ -100,19 +100,8 @@ main {
   transform: rotate(45deg);
 }
 
-.github-stars {
-  display: flex;
-  align-items: center;
-  height: 20px;
-}
-
-.github-stars iframe {
-  display: block;
-  border: 0;
-}
-
 .home-page main {
-  height: calc(100svh - 72px);
+  min-height: calc(100svh - 72px);
 }
 
 .hero {
@@ -120,7 +109,7 @@ main {
   grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
   gap: clamp(48px, 8vw, 96px);
   align-items: center;
-  height: 100%;
+  min-height: calc(100svh - 72px);
   padding: 28px 0 48px;
 }
 
@@ -193,12 +182,11 @@ main {
   color: oklch(98% 0.005 248);
   cursor: pointer;
   font: 600 11px ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  transition: background 150ms ease, transform 150ms ease;
+  transition: background 150ms ease, transform 150ms var(--ease-out);
 }
 
-.copy-button:hover {
-  background: oklch(54% 0.19 28);
-  transform: translateY(-1px);
+.copy-button:active {
+  transform: scale(0.97);
 }
 
 .copy-icon {
@@ -304,14 +292,14 @@ footer {
 }
 
 .home-page .mail-icon {
-  animation: mark-in 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: mark-in 550ms var(--ease-out) both;
 }
 
 .home-page .hero h1,
 .home-page .hero-copy,
 .home-page .home-legal,
 .home-page .prompt-shell {
-  animation: rise-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: rise-in 600ms var(--ease-out) both;
 }
 
 .home-page .hero-copy {
@@ -332,7 +320,7 @@ footer {
 }
 
 @keyframes mark-in {
-  from { opacity: 0; transform: scale(0.75) rotate(-7deg); }
+  from { opacity: 0; transform: scale(0.94) rotate(-4deg); }
   to { opacity: 1; transform: scale(1) rotate(0); }
 }
 
@@ -364,7 +352,7 @@ footer {
 @media (max-width: 720px) {
   .hero {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(170px, 1fr);
+    grid-template-rows: auto auto;
     gap: 24px;
     align-content: center;
     padding: 22px 0 34px;
@@ -403,6 +391,13 @@ footer {
     flex-direction: column;
     justify-content: center;
     padding: 22px 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .copy-button:hover {
+    background: oklch(54% 0.19 28);
+    transform: translateY(-1px);
   }
 }
 

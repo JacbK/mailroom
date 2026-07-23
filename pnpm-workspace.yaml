@@ -3,3 +3,14 @@ packages:
 
 allowBuilds:
   esbuild: true
+
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - x64
+    - arm64
+
+overrides:
+  # Patched transitive release; real Codex and Claude Code setup tests cover compatibility.
+  '@hono/node-server': 2.0.10

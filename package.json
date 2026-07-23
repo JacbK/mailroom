@@ -1,8 +1,17 @@
 {
   "name": "mailroom-workspace",
   "version": "0.4.0",
+  "description": "Local multi-account Gmail MCP for Codex and Claude Code.",
   "license": "MIT",
   "private": true,
+  "homepage": "https://mailroom.jacobkieser.me/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacbK/mailroom.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JacbK/mailroom/issues"
+  },
   "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": ">=22"
@@ -11,13 +20,14 @@
     "build": "pnpm --filter @mailroom/mcp build",
     "check": "pnpm --filter @mailroom/mcp check",
     "lint": "pnpm --filter @mailroom/mcp lint",
-    "test": "pnpm --filter @mailroom/mcp test && node --test scripts/setup-accounts.test.mjs scripts/setup-e2e.test.mjs",
+    "test": "pnpm --filter @mailroom/mcp test && node --test scripts/setup-accounts.test.mjs scripts/setup-e2e.test.mjs scripts/setup-shell.test.mjs",
     "test:coverage": "pnpm --filter @mailroom/mcp test:coverage",
     "test:e2e:live": "pnpm --filter @mailroom/mcp test:e2e:live",
     "validate:plugin": "node scripts/validate-plugins.mjs",
+    "validate:site": "node scripts/validate-public-site.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "scan:history": "node scripts/scan-history.mjs",
-    "verify": "pnpm check && pnpm lint && pnpm test && pnpm build && pnpm validate:plugin && pnpm scan:secrets && pnpm scan:history && pnpm peers check",
-    "release:check": "pnpm verify && MAILROOM_REQUIRE_PLUGIN_VALIDATORS=1 pnpm validate:plugin && pnpm test:coverage && pnpm audit --audit-level high && MAILROOM_LIVE_E2E=1 pnpm test:e2e:live"
+    "verify": "pnpm check && pnpm lint && pnpm test && pnpm build && pnpm validate:plugin && pnpm validate:site && pnpm scan:secrets && pnpm scan:history && pnpm peers check",
+    "release:check": "pnpm verify && MAILROOM_REQUIRE_OWNED_DOMAIN=1 pnpm validate:site && MAILROOM_REQUIRE_PLUGIN_VALIDATORS=1 pnpm validate:plugin && pnpm test:coverage && pnpm audit --audit-level high && MAILROOM_LIVE_E2E=1 pnpm test:e2e:live"
   }
 }

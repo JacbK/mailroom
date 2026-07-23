@@ -1,0 +1,29 @@
+# Public release
+
+Do not change repository visibility until the shared Google app is approved for `gmail.modify` and its required security assessment is complete.
+
+## Before changing visibility
+
+- Finish configuring `mailroom.jacobkieser.me`: verify the parent domain in GitHub, set the Pages custom domain, add the Namecheap CNAME, and enable HTTPS.
+- Update every public URL and confirm `MAILROOM_REQUIRE_OWNED_DOMAIN=1 pnpm validate:site` passes.
+- Confirm Branding and Data Access are approved in Google Verification Center.
+- Run `pnpm release:check` with the dedicated `personal` and `work` test accounts. This sends marked mail between them and moves it to Trash.
+- Test the README install prompt from a clean directory in current Codex and Claude Code.
+- Confirm `./setup --doctor` is healthy after restarting each client.
+- Review the public Git history with `pnpm scan:history`.
+
+## GitHub settings
+
+- [x] Add the description: `Local multi-account Gmail MCP for Codex and Claude Code.`
+- [x] Add topics: `gmail`, `mcp`, `codex`, `claude-code`, `macos`.
+- [x] Enable dependency alerts and security updates.
+- [x] Enable automatic deletion of merged branches.
+- [x] Disable unused Projects and Wiki.
+- [ ] After the repository is public, enable private vulnerability reporting, secret scanning, and push protection. These are unavailable on the current private-repository plan.
+- [ ] Protect `main`; require the new CI matrix and disallow force pushes after its first successful run.
+
+## First release
+
+- Tag the tested version from `main`.
+- Publish matching release notes with setup, upgrade, and uninstall commands.
+- Re-test the public README and policy links without a signed-in GitHub session.

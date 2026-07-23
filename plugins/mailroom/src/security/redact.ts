@@ -13,6 +13,13 @@ export function redact(value: string): string {
 }
 
 export function safeDiagnostic(error: unknown): string {
-  if (error instanceof Error) return redact(`${error.name}: ${error.message}`);
+  if (error instanceof Error) {
+    const recovery = error.name === 'MailroomError'
+      && 'recovery' in error
+      && typeof error.recovery === 'string'
+      ? `\nRecovery: ${error.recovery}`
+      : '';
+    return redact(`${error.name}: ${error.message}${recovery}`);
+  }
   return 'Unknown error';
 }

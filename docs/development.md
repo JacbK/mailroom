@@ -1,11 +1,13 @@
 # Development
 
-Requirements: macOS, Node 22 or newer, pnpm 11, Codex, and Claude Code.
+Code checks require Node 22 or newer and pnpm 11. macOS is required for Keychain, OAuth, and live Gmail checks. Codex and Claude Code are only required to test their real plugin installers.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm verify
-# Release only:
+# Release only: first requires an owned site domain, then sends
+# marked test mail between the configured personal and work
+# accounts and moves it to Trash.
 pnpm release:check
 ```
 
@@ -19,6 +21,7 @@ Useful source areas:
 - `src/mcp`: tool schemas, annotations, and server instructions
 - `test/unit`: pure behavior tests
 - `test/contract`: mocked Gmail and in-memory MCP tests
+- `scripts/setup-*.test.mjs`: installer parsing, client integration, and bootstrap tests
 
 Do not add scopes beyond `gmail.modify` or a permanent-delete tool. Do not put real email bodies, headers, OAuth responses, or attachment data into fixtures.
 
@@ -31,3 +34,5 @@ Current reference docs:
 - [Claude Code MCP](https://code.claude.com/docs/en/mcp)
 - [MCP TypeScript SDK v1](https://ts.sdk.modelcontextprotocol.io/server)
 - [Gmail scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)
+
+Maintainers: follow the [public release checklist](public-release.md) before changing visibility or publishing a tag.

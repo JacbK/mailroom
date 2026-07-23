@@ -3,7 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fingerprintOAuthClient, OAuthClientStore } from '../../src/auth/client-store.js';
-import { assertExpectedIdentity, AuthManager } from '../../src/auth/oauth.js';
+import {
+  assertExpectedIdentity,
+  AuthManager,
+  normalizeOAuthFailure,
+} from '../../src/auth/oauth.js';
 import { GMAIL_MODIFY_SCOPE } from '../../src/auth/scopes.js';
 import { MailroomError } from '../../src/errors.js';
 import { GmailClientFactory } from '../../src/gmail/client-factory.js';
@@ -35,6 +39,18 @@ describe('OAuth identity verification', () => {
   it('rejects the wrong Google account before credentials are saved', () => {
     expect(() => assertExpectedIdentity('wrong@gmail.com', 'work@example.com'))
       .toThrow(expect.objectContaining<Partial<MailroomError>>({ code: 'WRONG_ACCOUNT' }));
+  });
+
+  it('explains how to recover when Google blocks the shared app', () => {
+    const error = normalizeOAuthFailure(
+      new Error('OAuth authorization failed: access_denied.'),
+      'shared',
+    );
+    expect(error).toBeInstanceOf(MailroomError);
+    if (!(error instanceof MailroomError)) throw new Error('Expected MailroomError.');
+    expect(error.recovery).toContain('./setup --self-host');
+    expect(normalizeOAuthFailure(new Error('access_denied'), 'self-hosted'))
+      .toEqual(new Error('access_denied'));
   });
 
   it('explains the one-time permission upgrade for old credentials', async () => {

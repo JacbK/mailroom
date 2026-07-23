@@ -1,8 +1,18 @@
 {
   "name": "@mailroom/mcp",
   "version": "0.4.0",
+  "description": "Local multi-account Gmail MCP for Codex and Claude Code.",
   "license": "MIT",
   "private": true,
+  "homepage": "https://mailroom.jacobkieser.me/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacbK/mailroom.git",
+    "directory": "plugins/mailroom"
+  },
+  "bugs": {
+    "url": "https://github.com/JacbK/mailroom/issues"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"

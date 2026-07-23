@@ -5,7 +5,7 @@ Mailroom is local. It can read and change Gmail only through explicit MCP tool c
 ## Boundaries
 
 - OAuth scope: `https://www.googleapis.com/auth/gmail.modify`
-- OAuth apps: verified Mailroom Desktop client by default, or a user-provided Desktop client
+- OAuth apps: bundled Mailroom Desktop client by default, or a user-provided Desktop client
 - Credential store: macOS Keychain
 - Transport: local stdio
 - Gmail mutations: drafts, sends, forwards, labels, archive, and recoverable Trash
@@ -13,7 +13,7 @@ Mailroom is local. It can read and change Gmail only through explicit MCP tool c
 - Remote HTML resources: never loaded
 - Agent data path: requested Gmail results are returned to Codex or Claude and may be processed by that provider
 
-Google classifies `gmail.modify` as a restricted scope. It allows the connector-parity features without permanent deletion. OAuth credentials, refresh tokens, configuration, MIME conversion, and the MCP transport stay local. Anything a tool returns is sent to the active Codex or Claude client and may be processed under that provider's data terms and controls. A hosted or publicly distributed app needs a separate Google policy and verification review.
+Google classifies `gmail.modify` as a restricted scope. It allows the connector-parity features without permanent deletion. OAuth credentials, refresh tokens, configuration, MIME conversion, and the MCP transport stay local. Anything a tool returns is sent to the active Codex or Claude client and may be processed under that provider's data terms and controls. The bundled app is still completing Google's verification and required security review; shared sign-in may be blocked until those reviews finish.
 
 ## Threat model
 

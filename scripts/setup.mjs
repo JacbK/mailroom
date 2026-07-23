@@ -21,15 +21,51 @@ const legacyPlugin = `gmail-switchboard@${legacyMarketplace}`;
 const rawArgs = process.argv.slice(2);
 const args = new Set(rawArgs);
 
-function optionValue(name) {
-  const inline = rawArgs.find((value) => value.startsWith(`${name}=`));
-  const index = rawArgs.indexOf(name);
-  if (inline && index !== -1) throw new Error(`${name} can only be supplied once.`);
-  if (inline) return inline.slice(name.length + 1);
-  if (index === -1) return null;
-  const value = rawArgs[index + 1];
-  if (!value || value.startsWith('--')) throw new Error(`${name} needs a file path.`);
+function optionValue(name, valueDescription = 'a value') {
+  const inline = rawArgs.filter((value) => value.startsWith(`${name}=`));
+  const separate = rawArgs.flatMap((value, index) => value === name ? [index] : []);
+  if (inline.length + separate.length > 1) {
+    throw new Error(`${name} can only be supplied once.`);
+  }
+  if (inline.length === 1) {
+    const value = inline[0].slice(name.length + 1);
+    if (!value) throw new Error(`${name} needs ${valueDescription}.`);
+    return value;
+  }
+  if (separate.length === 0) return null;
+  const value = rawArgs[separate[0] + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} needs ${valueDescription}.`);
   return value;
+}
+
+function validateArguments() {
+  const standalone = new Set(['--shared', '--reauth', '--doctor', '--uninstall', '--help', '-h']);
+  const withValues = new Set(['--account', '--self-host']);
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const value = rawArgs[index];
+    if (standalone.has(value)) continue;
+    if (withValues.has(value)) {
+      const next = rawArgs[index + 1];
+      if (!next || next.startsWith('--')) throw new Error(`${value} needs a value.`);
+      index += 1;
+      continue;
+    }
+    if (value.startsWith('--account=') || value.startsWith('--self-host=')) continue;
+    throw new Error(`Unknown setup option "${value}". Run ./setup --help.`);
+  }
+
+  const oneShot = ['--doctor', '--uninstall', '--help', '-h'].filter((name) => args.has(name));
+  if (oneShot.length > 1) {
+    throw new Error('Choose only one of --doctor, --uninstall, or --help.');
+  }
+  if (oneShot.length === 1 && rawArgs.length > 1) {
+    throw new Error(`${oneShot[0]} cannot be combined with other setup options.`);
+  }
+
+  const selfHosted = optionValue('--self-host', 'a Google OAuth JSON file path');
+  if (selfHosted && args.has('--shared')) {
+    throw new Error('Choose either --shared or --self-host, not both.');
+  }
 }
 
 function printUsage() {
@@ -213,10 +249,7 @@ function uninstallPlugins() {
 }
 
 function ensureOAuthClient() {
-  const selfHosted = optionValue('--self-host');
-  if (selfHosted && args.has('--shared')) {
-    throw new Error('Choose either --shared or --self-host, not both.');
-  }
+  const selfHosted = optionValue('--self-host', 'a Google OAuth JSON file path');
   if (selfHosted) {
     run(process.execPath, [cli, 'client', 'set', selfHosted, '--delete-source']);
   } else if (args.has('--shared')) {
@@ -277,8 +310,8 @@ async function ensureAccounts(requested, forceReauth = false) {
   }
 
   for (const account of current) {
-    const shouldReconnect = forceReauth
-      || (desired.length === 0 && account.status === 'needs_auth');
+    const shouldReconnect = desired.length === 0
+      && (forceReauth || account.status === 'needs_auth');
     if (!handled.has(account.alias) && shouldReconnect) {
       run(process.execPath, [cli, 'auth', 'reauth', account.alias]);
     }
@@ -289,19 +322,37 @@ function printInstallStatus() {
   let healthy = false;
   if (commandExists('codex')) {
     const codex = json('codex', ['plugin', 'list', '--json']);
-    const installed = codex.installed.some((item) => item.pluginId === plugin);
+    const entry = codex.installed.find((item) => item.pluginId === plugin);
+    const installed = Boolean(entry);
+    const enabled = entry?.enabled !== false;
     const marketplaceCurrent = samePath(codexMarketplacePath(codexMarketplaceEntry()), root);
-    const ok = installed && marketplaceCurrent;
-    process.stdout.write(`Codex plugin: ${ok ? 'installed' : installed ? 'wrong marketplace path' : 'missing'}\n`);
+    const ok = installed && enabled && marketplaceCurrent;
+    const status = !installed
+      ? 'missing'
+      : !enabled
+        ? 'disabled'
+        : marketplaceCurrent
+          ? 'installed'
+          : 'wrong marketplace path';
+    process.stdout.write(`Codex plugin: ${status}\n`);
     healthy ||= ok;
     if (!ok) process.exitCode = 2;
   }
   if (commandExists('claude')) {
-    const claude = run('claude', ['plugin', 'list'], { capture: true }).stdout;
-    const installed = claude.includes(plugin);
+    const claude = json('claude', ['plugin', 'list', '--json']);
+    const entry = claude.find((item) => item.id === plugin);
+    const installed = Boolean(entry);
+    const enabled = entry?.enabled !== false;
     const marketplaceCurrent = samePath(claudeMarketplacePath(claudeMarketplaceEntry()), root);
-    const ok = installed && marketplaceCurrent;
-    process.stdout.write(`Claude Code plugin: ${ok ? 'installed' : installed ? 'wrong marketplace path' : 'missing'}\n`);
+    const ok = installed && enabled && marketplaceCurrent;
+    const status = !installed
+      ? 'missing'
+      : !enabled
+        ? 'disabled'
+        : marketplaceCurrent
+          ? 'installed'
+          : 'wrong marketplace path';
+    process.stdout.write(`Claude Code plugin: ${status}\n`);
     healthy ||= ok;
     if (!ok) process.exitCode = 2;
   }
@@ -309,6 +360,8 @@ function printInstallStatus() {
 }
 
 async function main() {
+  validateArguments();
+
   if (args.has('--help') || args.has('-h')) {
     printUsage();
     return;

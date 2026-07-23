@@ -5,7 +5,7 @@
   "author": {
     "name": "Jacob Kieser"
   },
-  "homepage": "https://jacbk.github.io/mailroom/",
+  "homepage": "https://mailroom.jacobkieser.me/",
   "repository": "https://github.com/JacbK/mailroom",
   "license": "MIT",
   "skills": "./skills/",
@@ -15,9 +15,9 @@
     "longDescription": "Search and manage any number of Gmail accounts without mixing them up.",
     "developerName": "Jacob Kieser",
     "category": "Productivity",
-    "websiteURL": "https://jacbk.github.io/mailroom/",
-    "privacyPolicyURL": "https://jacbk.github.io/mailroom/privacy.html",
-    "termsOfServiceURL": "https://jacbk.github.io/mailroom/terms.html",
+    "websiteURL": "https://mailroom.jacobkieser.me/",
+    "privacyPolicyURL": "https://mailroom.jacobkieser.me/privacy.html",
+    "termsOfServiceURL": "https://mailroom.jacobkieser.me/terms.html",
     "capabilities": [
       "Read",
       "Write"

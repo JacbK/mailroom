@@ -6,7 +6,12 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const setupScript = resolve(import.meta.dirname, 'setup.mjs');
+const repositoryRoot = resolve(import.meta.dirname, '..');
 const fixtures = [];
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 async function makeExecutable(path, source) {
   await writeFile(path, `#!/usr/bin/env node\n${source}`, { mode: 0o700 });
@@ -16,7 +21,7 @@ async function makeExecutable(path, source) {
 async function fixture(
   clients,
   accounts = [],
-  marketplaceRoot = resolve(import.meta.dirname, '..'),
+  marketplaceRoot = repositoryRoot,
   oauthHealthy = true,
   doctorHealthy = true,
 ) {
@@ -61,8 +66,8 @@ else if (host === 'codex' && args.join(' ') === 'plugin marketplace list --json'
   process.stdout.write(JSON.stringify({ installed: [{ pluginId: 'mailroom@mailroom-local' }] }) + '\\n');
 } else if (host === 'claude' && args.join(' ') === 'plugin marketplace list --json') {
   process.stdout.write(JSON.stringify([{ name: 'mailroom-local', source: 'directory', path: marketplaceRoot, installLocation: marketplaceRoot }]) + '\\n');
-} else if (host === 'claude' && args.join(' ') === 'plugin list') {
-  process.stdout.write('mailroom@mailroom-local\\n');
+} else if (host === 'claude' && args.join(' ') === 'plugin list --json') {
+  process.stdout.write(JSON.stringify([{ id: 'mailroom@mailroom-local', enabled: true }]) + '\\n');
 } else if (args[0] === 'plugin' && args[1] === 'marketplace' && args[2] === 'add') {
   writeFileSync(marketplaceState, args[3]);
 }
@@ -145,9 +150,15 @@ test('repairs stale marketplace paths before installing', async () => {
   assert.equal(result.status, 0, result.stderr);
   const log = await calls(current);
   assert.match(log, /codex plugin marketplace remove mailroom-local/);
-  assert.match(log, /codex plugin marketplace add .*mailroom --json/);
+  assert.match(
+    log,
+    new RegExp(`codex plugin marketplace add ${escapeRegExp(repositoryRoot)} --json`),
+  );
   assert.match(log, /claude plugin marketplace remove mailroom-local/);
-  assert.match(log, /claude plugin marketplace add .*mailroom --scope user/);
+  assert.match(
+    log,
+    new RegExp(`claude plugin marketplace add ${escapeRegExp(repositoryRoot)} --scope user`),
+  );
   assert.match(result.stdout, /Updating the Codex marketplace path/);
   assert.match(result.stdout, /Updating the Claude Code marketplace path/);
 });
@@ -160,6 +171,19 @@ test('recovers an account that needs authentication', async () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(await calls(current), /cli auth reauth work/);
+});
+
+test('targeted reauth does not reconnect unrelated accounts', async () => {
+  const current = await fixture(['codex'], [
+    { alias: 'work', email: 'user@company.com', status: 'connected' },
+    { alias: 'personal', email: 'user@example.com', status: 'connected' },
+  ]);
+  const result = runSetup(current, ['--reauth', '--account', 'work=user@company.com']);
+
+  assert.equal(result.status, 0, result.stderr);
+  const log = await calls(current);
+  assert.match(log, /cli auth reauth work/);
+  assert.doesNotMatch(log, /cli auth reauth personal/);
 });
 
 test('supports explicit shared and self-hosted OAuth modes', async () => {
@@ -184,7 +208,7 @@ test('repairs missing OAuth configuration with the shared app by default', async
   const current = await fixture(
     ['claude'],
     [{ alias: 'personal', email: 'user@example.com', status: 'connected' }],
-    resolve(import.meta.dirname, '..'),
+    repositoryRoot,
     false,
   );
   const result = runSetup(current, []);
@@ -206,7 +230,7 @@ test('reports an unhealthy doctor result without a setup-stopped error', async (
   const current = await fixture(
     ['codex'],
     [],
-    resolve(import.meta.dirname, '..'),
+    repositoryRoot,
     true,
     false,
   );
@@ -215,4 +239,18 @@ test('reports an unhealthy doctor result without a setup-stopped error', async (
   assert.equal(result.status, 2);
   assert.match(result.stdout, /Overall: needs attention/);
   assert.doesNotMatch(result.stderr, /Setup stopped/);
+});
+
+test('rejects unknown and conflicting options before changing anything', async () => {
+  const unknown = await fixture(['codex']);
+  const unknownResult = runSetup(unknown, ['--doctro']);
+  assert.equal(unknownResult.status, 1);
+  assert.match(unknownResult.stderr, /Unknown setup option/);
+  assert.equal(await calls(unknown), '');
+
+  const conflicting = await fixture(['codex']);
+  const conflictingResult = runSetup(conflicting, ['--shared', '--self-host', '/tmp/oauth.json']);
+  assert.equal(conflictingResult.status, 1);
+  assert.match(conflictingResult.stderr, /Choose either --shared or --self-host/);
+  assert.equal(await calls(conflicting), '');
 });
