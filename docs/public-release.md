@@ -4,13 +4,14 @@ Do not change repository visibility until the shared Google app is approved for 
 
 ## Before changing visibility
 
-- Finish configuring `mailroom.jacobkieser.me`: verify the parent domain in GitHub, set the Pages custom domain, add the Namecheap CNAME, and enable HTTPS.
-- Update every public URL and confirm `MAILROOM_REQUIRE_OWNED_DOMAIN=1 pnpm validate:site` passes.
+- [x] Finish configuring `mailroom.jacobkieser.me`: verify the parent domain in GitHub, set the Pages custom domain, add the Namecheap CNAME, and enable HTTPS.
+- [x] Update every public URL and confirm `MAILROOM_REQUIRE_OWNED_DOMAIN=1 pnpm validate:site` passes.
 - Confirm Branding and Data Access are approved in Google Verification Center.
-- Run `pnpm release:check` with the dedicated `personal` and `work` test accounts. This sends marked mail between them and moves it to Trash.
+- [x] Run `pnpm release:check` with the dedicated `personal` and `work` test accounts. This sends marked mail between them and moves it to Trash.
 - Test the README install prompt from a clean directory in current Codex and Claude Code.
 - Confirm `./setup --doctor` is healthy after restarting each client.
-- Review the public Git history with `pnpm scan:history`.
+- [x] Confirm `./setup --doctor` is healthy with both clients installed and both Gmail test accounts connected.
+- [x] Review the public Git history with `pnpm scan:history`.
 
 ## GitHub settings
 
