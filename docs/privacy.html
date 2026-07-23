@@ -3,15 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
     <link rel="canonical" href="https://jacbk.github.io/mailroom/privacy.html" />
     <meta name="description" content="Mailroom by Jacob Kieser privacy policy." />
     <title>Privacy | Mailroom by Jacob Kieser</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Syne:wght@500;600;700;800&amp;display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -24,8 +19,7 @@
       <p class="hero-label">Mailroom by Jacob Kieser</p>
       <h1>Privacy</h1>
       <p class="legal-intro">
-        This is a side project. I did not want email sitting on some random
-        server, so it does not.
+        Mailroom runs locally and does not store Gmail data on a hosted Mailroom server.
       </p>
       <p class="updated">Last updated July 18, 2026</p>
 
@@ -42,35 +36,35 @@
         </section>
 
         <section class="card">
-          <h2>Short version</h2>
+          <h2>Data storage</h2>
           <p>
-            Mailroom runs locally. No hosted backend, no email database, no
-            ads, no analytics, no telemetry, and no selling your data.
+            Mailroom has no hosted backend or email database. It does not use
+            ads, analytics, or telemetry, and it does not sell Gmail data.
           </p>
         </section>
 
         <section class="card">
           <h2>What it can access</h2>
           <p>
-            You can let it search and read messages, manage labels, make and
+            Mailroom can search and read messages, manage labels, create and
             update drafts, send and forward email, archive, and move messages
-            to Trash. It also reads the account email so it can tell inboxes
-            apart.
+            to Trash. It reads each account address to route results to the
+            correct inbox.
           </p>
         </section>
 
         <section class="card">
-          <h2>What leaves your Mac</h2>
+          <h2>Agent access</h2>
           <p>
             When you ask Codex, Claude, or another MCP client to work with an
-            email, the email needed for that request goes to the client you
-            picked. Their privacy terms and settings apply. Mailroom does not
+            email, the email needed for that request goes to the selected
+            client. Its privacy terms and settings apply. Mailroom does not
             use Gmail data for ads, profiling, sale, or AI model training.
           </p>
         </section>
 
         <section class="card">
-          <h2>What gets saved</h2>
+          <h2>Local storage</h2>
           <p>
             The Mailroom Google app ID ships with the plugin. It cannot access
             your account by itself. Your OAuth tokens go in macOS Keychain.
@@ -80,7 +74,7 @@
         </section>
 
         <section class="card">
-          <h2>Removing it</h2>
+          <h2>Delete your data</h2>
           <p>
             Run <code>./setup --uninstall</code> to remove the plugin and choose
             whether to revoke its tokens, or disconnect one account with

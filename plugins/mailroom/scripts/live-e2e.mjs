@@ -18,6 +18,7 @@ const expectedEmails = {
   personal: process.env.MAILROOM_E2E_PERSONAL_EMAIL ?? 'jacobk2112@gmail.com',
   work: process.env.MAILROOM_E2E_WORK_EMAIL ?? 'jacob@embrasure.ai',
 };
+const demoMode = process.env.MAILROOM_DEMO === '1';
 const runId = randomUUID();
 const marker = `mailroom-e2e-${runId}`;
 const labelName = 'mailroom-e2e';
@@ -33,6 +34,7 @@ const transport = new StdioClientTransport({
 const client = new Client({ name: 'mailroom-live-e2e', version: '1.0.0' });
 
 async function call(name, args = {}) {
+  if (demoMode) process.stdout.write(`→ ${name}\n`);
   const response = await client.callTool({ name, arguments: args });
   if (response.isError) {
     const detail = response.content
@@ -41,6 +43,7 @@ async function call(name, args = {}) {
       .join('\n');
     throw new Error(`${name} failed${detail ? `: ${detail}` : ''}`);
   }
+  if (demoMode) process.stdout.write(`✓ ${name}\n`);
   if (response.structuredContent) return response.structuredContent;
   const text = response.content?.find((item) => item.type === 'text')?.text;
   return text ? JSON.parse(text) : {};

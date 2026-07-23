@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { dirname, resolve } from 'node:path';
@@ -35,6 +36,7 @@ function printUsage() {
   process.stdout.write(`Mailroom setup
 
   ./setup --account work=you@company.com --account personal=you@gmail.com
+  ./setup
   ./setup --self-host /path/to/google-oauth.json
   ./setup --shared
   ./setup --reauth
@@ -79,14 +81,68 @@ async function ask(question) {
   }
 }
 
-function hasCodexMarketplace() {
-  const listing = json('codex', ['plugin', 'marketplace', 'list', '--json']);
-  return listing.marketplaces.some((item) => item.name === marketplace);
+function canonicalPath(path) {
+  if (!path) return null;
+  try {
+    return realpathSync.native(path);
+  } catch {
+    return resolve(path);
+  }
 }
 
-function hasClaudeMarketplace() {
+function samePath(left, right) {
+  return canonicalPath(left) === canonicalPath(right);
+}
+
+function codexMarketplaceEntry() {
+  const listing = json('codex', ['plugin', 'marketplace', 'list', '--json']);
+  return listing.marketplaces.find((item) => item.name === marketplace) ?? null;
+}
+
+function claudeMarketplaceEntry() {
   const listing = json('claude', ['plugin', 'marketplace', 'list', '--json']);
-  return listing.some((item) => item.name === marketplace);
+  return listing.find((item) => item.name === marketplace) ?? null;
+}
+
+function codexMarketplacePath(entry) {
+  return entry?.marketplaceSource?.source ?? entry?.root ?? null;
+}
+
+function claudeMarketplacePath(entry) {
+  return entry?.path ?? (entry?.source === 'directory' ? entry?.installLocation : null) ?? null;
+}
+
+function ensureCodexMarketplace() {
+  const entry = codexMarketplaceEntry();
+  if (entry && !samePath(codexMarketplacePath(entry), root)) {
+    process.stdout.write('Updating the Codex marketplace path…\n');
+    run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
+    run('codex', ['plugin', 'marketplace', 'remove', marketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
+  if (!entry || !samePath(codexMarketplacePath(entry), root)) {
+    run('codex', ['plugin', 'marketplace', 'add', root, '--json']);
+  }
+}
+
+function ensureClaudeMarketplace() {
+  const entry = claudeMarketplaceEntry();
+  if (entry && !samePath(claudeMarketplacePath(entry), root)) {
+    process.stdout.write('Updating the Claude Code marketplace path…\n');
+    run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
+      allowFailure: true,
+      capture: true,
+    });
+    run('claude', ['plugin', 'marketplace', 'remove', marketplace], {
+      allowFailure: true,
+      capture: true,
+    });
+  }
+  if (!entry || !samePath(claudeMarketplacePath(entry), root)) {
+    run('claude', ['plugin', 'marketplace', 'add', root, '--scope', 'user']);
+  }
 }
 
 function removeLegacyPlugin() {
@@ -118,18 +174,14 @@ function installPlugins() {
   removeLegacyPlugin();
   if (hasCodex) {
     process.stdout.write('\nInstalling the Codex plugin…\n');
-    if (!hasCodexMarketplace()) {
-      run('codex', ['plugin', 'marketplace', 'add', root, '--json']);
-    }
+    ensureCodexMarketplace();
     run('codex', ['plugin', 'remove', plugin, '--json'], { allowFailure: true, capture: true });
     run('codex', ['plugin', 'add', plugin, '--json']);
   }
 
   if (hasClaude) {
     process.stdout.write('\nInstalling the Claude Code plugin…\n');
-    if (!hasClaudeMarketplace()) {
-      run('claude', ['plugin', 'marketplace', 'add', root, '--scope', 'user']);
-    }
+    ensureClaudeMarketplace();
     run('claude', ['plugin', 'uninstall', plugin, '--scope', 'user', '--yes'], {
       allowFailure: true,
       capture: true,
@@ -172,7 +224,9 @@ function ensureOAuthClient() {
   } else {
     const status = json(process.execPath, [cli, 'client', 'status', '--json'], { allowFailure: true });
     if (!status?.ok) {
-      throw new Error('Google OAuth needs repair. Run ./setup --shared or ./setup --self-host <oauth-json>.');
+      process.stdout.write('Google OAuth: repairing with the Mailroom shared app\n');
+      run(process.execPath, [cli, 'client', 'shared']);
+      return;
     }
     process.stdout.write(`Google OAuth: ${status.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'}\n`);
   }
@@ -236,16 +290,20 @@ function printInstallStatus() {
   if (commandExists('codex')) {
     const codex = json('codex', ['plugin', 'list', '--json']);
     const installed = codex.installed.some((item) => item.pluginId === plugin);
-    process.stdout.write(`Codex plugin: ${installed ? 'installed' : 'missing'}\n`);
-    healthy ||= installed;
-    if (!installed) process.exitCode = 2;
+    const marketplaceCurrent = samePath(codexMarketplacePath(codexMarketplaceEntry()), root);
+    const ok = installed && marketplaceCurrent;
+    process.stdout.write(`Codex plugin: ${ok ? 'installed' : installed ? 'wrong marketplace path' : 'missing'}\n`);
+    healthy ||= ok;
+    if (!ok) process.exitCode = 2;
   }
   if (commandExists('claude')) {
     const claude = run('claude', ['plugin', 'list'], { capture: true }).stdout;
     const installed = claude.includes(plugin);
-    process.stdout.write(`Claude Code plugin: ${installed ? 'installed' : 'missing'}\n`);
-    healthy ||= installed;
-    if (!installed) process.exitCode = 2;
+    const marketplaceCurrent = samePath(claudeMarketplacePath(claudeMarketplaceEntry()), root);
+    const ok = installed && marketplaceCurrent;
+    process.stdout.write(`Claude Code plugin: ${ok ? 'installed' : installed ? 'wrong marketplace path' : 'missing'}\n`);
+    healthy ||= ok;
+    if (!ok) process.exitCode = 2;
   }
   if (!healthy) process.exitCode = 2;
 }
@@ -258,7 +316,8 @@ async function main() {
 
   if (args.has('--doctor')) {
     printInstallStatus();
-    run(process.execPath, [cli, 'doctor']);
+    const result = run(process.execPath, [cli, 'doctor'], { allowFailure: true });
+    if (result.status !== 0) process.exitCode = result.status ?? 2;
     return;
   }
 

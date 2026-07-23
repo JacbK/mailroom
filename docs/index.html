@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
     <link rel="canonical" href="https://jacbk.github.io/mailroom/" />
     <meta
       name="google-site-verification"
@@ -10,20 +11,17 @@
     />
     <meta
       name="description"
-      content="Mailroom is a small local plugin for using all your Gmail accounts from Codex or Claude."
+      content="Gmail MCP functionality for multiple accounts, works with any agent."
     />
     <title>Mailroom by Jacob Kieser</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Syne:wght@500;600;700;800&amp;display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="home-page">
     <nav class="site-nav" aria-label="Main navigation">
-      <a class="logo" href="./">Mailroom</a>
+      <a class="logo" href="./" aria-label="Mailroom">
+        <span class="mail-icon" aria-hidden="true"></span>
+        <span class="wordmark">Mailroom</span>
+      </a>
       <div class="github-stars">
         <iframe
           src="https://ghbtns.com/github-btn.html?user=JacbK&amp;repo=mailroom&amp;type=star&amp;count=true"
@@ -36,96 +34,49 @@
 
     <main>
       <section class="hero">
-        <p class="hero-label">I got tired of switching Gmail accounts.</p>
-        <div class="hero-title-wrap">
-          <span class="mail-mark" aria-hidden="true">@</span>
-          <h1>Mailroom</h1>
+        <div class="hero-content">
+          <h1>Multiple Gmail accounts, one MCP.</h1>
+          <p class="hero-copy">
+            Codex doesn't let you connect multiple Gmail accounts, so I made this.
+            Same functionality as Gmail MCP but with multiple accounts, works with any agent.
+          </p>
+          <div class="home-legal">
+            <a href="https://github.com/JacbK/mailroom" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="./privacy.html">Privacy</a>
+            <a href="./terms.html">Terms</a>
+          </div>
         </div>
-        <p class="hero-copy">
-          So I made a small local plugin that lets Codex or Claude use all of
-          them. Add as many accounts as you want.
-        </p>
-        <div class="hero-actions">
-          <a class="button" href="#install">Install it</a>
-          <a
-            class="text-link"
-            href="https://github.com/JacbK/mailroom"
-            target="_blank"
-            rel="noopener noreferrer"
-          >See the repo</a>
-        </div>
-      </section>
 
-      <section class="terminal-section" id="install">
-        <div class="terminal-head">
-          <span>One prompt setup</span>
-          <button class="copy-button" type="button" data-copy-button>
-            Copy prompt
-          </button>
-        </div>
-        <pre class="terminal"><code><span class="prompt">›</span> <span id="install-prompt">Install or safely update Mailroom from https://github.com/JacbK/mailroom in ~/.mailroom. Ask which Gmail accounts I want to add. Use the shared Google app and keep going until ~/.mailroom/setup --doctor is healthy. I'll handle Google sign-ins.</span></code></pre>
-      </section>
-
-      <section class="inside">
-        <h2>What's in it</h2>
-        <div class="card-grid">
-          <article class="card">
-            <h3>However many accounts</h3>
-            <p>Add two or twenty. Search one inbox or all of them.</p>
-          </article>
-          <article class="card">
-            <h3>Normal Gmail stuff</h3>
-            <p>Search, read, draft, send, forward, label, archive, and trash.</p>
-          </article>
-          <article class="card">
-            <h3>Hard to mix up</h3>
-            <p>Every ID includes the account. The agent never has to guess.</p>
-          </article>
-          <article class="card">
-            <h3>Runs on your Mac</h3>
-            <p>Tokens go in Keychain. No hosted backend or tracking.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="compat">
-        <p>Works with</p>
-        <div class="compat-list">
-          <span class="compat-item"><span class="status-dot codex"></span>Codex</span>
-          <span class="compat-item"><span class="status-dot claude"></span>Claude Code</span>
+        <div class="prompt-shell" id="install">
+          <div class="prompt-head">
+            <span>Paste into your agent</span>
+            <button class="copy-button" type="button" data-copy-button>
+              <span class="copy-icon" aria-hidden="true"></span>
+              <span data-copy-label>Copy</span>
+            </button>
+          </div>
+          <pre class="terminal"><code><span id="install-prompt">Install or safely update Mailroom from https://github.com/JacbK/mailroom in ~/.mailroom. Ask which Gmail accounts I want to add, then run ~/.mailroom/setup --shared with one --account alias=email flag for each account. Keep going until ~/.mailroom/setup --doctor is healthy. I'll handle Google sign-ins.</span></code></pre>
         </div>
       </section>
     </main>
 
-    <footer>
-      <div class="footer-inner">
-        <a
-          href="https://github.com/JacbK/mailroom"
-          target="_blank"
-          rel="noopener noreferrer"
-        >github.com/JacbK/mailroom</a>
-        <nav aria-label="Legal">
-          <a href="./privacy.html">Privacy</a>
-          <a href="./terms.html">Terms</a>
-          <a href="mailto:jacobk2112@gmail.com">Email me</a>
-        </nav>
-      </div>
-    </footer>
-
     <script>
       const promptText = document.getElementById("install-prompt").textContent;
-      const copyButton = document.querySelector("[data-copy-button]");
+      const copyButtons = document.querySelectorAll("[data-copy-button]");
 
-      copyButton.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(promptText);
-          copyButton.textContent = "Copied";
-        } catch {
-          copyButton.textContent = "Copy failed";
-        }
-        window.setTimeout(() => {
-          copyButton.textContent = "Copy prompt";
-        }, 1600);
+      copyButtons.forEach((copyButton) => {
+        const copyLabel = copyButton.querySelector("[data-copy-label]");
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(promptText);
+            copyLabel.textContent = "Copied";
+          } catch {
+            copyLabel.textContent = "Copy failed";
+          }
+          window.setTimeout(() => {
+            copyLabel.textContent = "Copy";
+          }, 1600);
+        });
       });
     </script>
   </body>

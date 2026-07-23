@@ -1,20 +1,27 @@
 # Use your own Google app
 
-1. Create a Google Cloud project and enable the Gmail API.
-2. Configure an External OAuth consent screen with `gmail.modify`.
-3. Create a Desktop OAuth client and download its JSON.
-4. Run:
+Mailroom uses its shared Google app by default. Use your own if shared sign-in is blocked or you want the OAuth client under your Google Cloud project.
+
+1. Create a Google Cloud project and [enable the Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com).
+2. Open [Google Auth Platform](https://console.cloud.google.com/auth/overview) and configure Branding.
+3. Under Audience, choose External. If the app is in Testing, add every Gmail account you plan to connect as a test user.
+4. Under Data Access, add [`https://www.googleapis.com/auth/gmail.modify`](https://developers.google.com/workspace/gmail/api/auth/scopes).
+5. Under Clients, create a **Desktop app** OAuth client and download its JSON.
+6. Run:
 
 ```sh
-./setup --self-host ~/Downloads/google-oauth.json
+git clone https://github.com/JacbK/mailroom.git ~/.mailroom
+~/.mailroom/setup --self-host ~/Downloads/google-oauth.json
 ```
 
-Setup moves the client into macOS Keychain, deletes the downloaded file, and opens Google sign-in for each account. If the app stays in Testing, add every Gmail address as a test user. For long-lived tokens, publish the app to Production.
+Mailroom moves the OAuth client into macOS Keychain, deletes the downloaded file, and opens Google sign-in for each account.
 
-Switching apps asks you to reconnect every configured account. The old setup stays active unless every sign-in succeeds.
+`gmail.modify` is a restricted scope. A personal app can stay in Testing if every account is a test user, but its refresh tokens expire after seven days. Publish it to Production for persistent access or for accounts outside the test-user list. Google may show an unverified-app warning unless the project completes verification.
 
-Switch back later with:
+Switch back to the Mailroom app with:
 
 ```sh
-./setup --shared
+~/.mailroom/setup --shared
 ```
+
+Switching apps reconnects every configured account. Mailroom keeps the old app active unless every sign-in succeeds.

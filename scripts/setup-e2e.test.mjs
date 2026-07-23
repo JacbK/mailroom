@@ -13,7 +13,13 @@ async function makeExecutable(path, source) {
   await chmod(path, 0o700);
 }
 
-async function fixture(clients, accounts = []) {
+async function fixture(
+  clients,
+  accounts = [],
+  marketplaceRoot = resolve(import.meta.dirname, '..'),
+  oauthHealthy = true,
+  doctorHealthy = true,
+) {
   const directory = await mkdtemp(join(tmpdir(), 'mailroom-setup-e2e-'));
   fixtures.push(directory);
   const bin = join(directory, 'bin');
@@ -26,33 +32,43 @@ import { appendFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 appendFileSync(process.env.MAILROOM_SETUP_CALL_LOG, 'cli ' + args.join(' ') + '\\n');
 if (args[0] === 'client' && args[1] === 'status') {
-  process.stdout.write(JSON.stringify({ configured: true, mode: 'shared', fingerprint: '1234567890abcdef', ok: true }) + '\\n');
+  const ok = process.env.MAILROOM_SETUP_OAUTH_HEALTHY === '1';
+  process.stdout.write(JSON.stringify({ configured: ok, mode: ok ? 'shared' : null, fingerprint: ok ? '1234567890abcdef' : null, ok }) + '\\n');
 } else if (args[0] === 'auth' && args[1] === 'list') {
   process.stdout.write(JSON.stringify({ accounts: JSON.parse(process.env.MAILROOM_SETUP_ACCOUNTS || '[]') }) + '\\n');
 } else if (args[0] === 'doctor') {
-  process.stdout.write('Overall: healthy\\n');
+  const healthy = process.env.MAILROOM_SETUP_DOCTOR_HEALTHY === '1';
+  process.stdout.write('Overall: ' + (healthy ? 'healthy' : 'needs attention') + '\\n');
+  if (!healthy) process.exitCode = 2;
 }
 `);
   for (const client of clients) {
     await makeExecutable(join(bin, client), `
 import { appendFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 const host = basename(process.argv[1]);
 const args = process.argv.slice(2);
+const marketplaceState = process.env.MAILROOM_SETUP_MARKETPLACE_STATE + '-' + host;
+const marketplaceRoot = existsSync(marketplaceState)
+  ? readFileSync(marketplaceState, 'utf8')
+  : process.env.MAILROOM_SETUP_MARKETPLACE_ROOT;
 appendFileSync(process.env.MAILROOM_SETUP_CALL_LOG, host + ' ' + args.join(' ') + '\\n');
 if (args.includes('--version')) process.stdout.write('1.0.0\\n');
 else if (host === 'codex' && args.join(' ') === 'plugin marketplace list --json') {
-  process.stdout.write(JSON.stringify({ marketplaces: [{ name: 'mailroom-local' }] }) + '\\n');
+  process.stdout.write(JSON.stringify({ marketplaces: [{ name: 'mailroom-local', root: marketplaceRoot, marketplaceSource: { sourceType: 'local', source: marketplaceRoot } }] }) + '\\n');
 } else if (host === 'codex' && args.join(' ') === 'plugin list --json') {
   process.stdout.write(JSON.stringify({ installed: [{ pluginId: 'mailroom@mailroom-local' }] }) + '\\n');
 } else if (host === 'claude' && args.join(' ') === 'plugin marketplace list --json') {
-  process.stdout.write(JSON.stringify([{ name: 'mailroom-local' }]) + '\\n');
+  process.stdout.write(JSON.stringify([{ name: 'mailroom-local', source: 'directory', path: marketplaceRoot, installLocation: marketplaceRoot }]) + '\\n');
 } else if (host === 'claude' && args.join(' ') === 'plugin list') {
   process.stdout.write('mailroom@mailroom-local\\n');
+} else if (args[0] === 'plugin' && args[1] === 'marketplace' && args[2] === 'add') {
+  writeFileSync(marketplaceState, args[3]);
 }
 `);
   }
-  return { accounts, bin, cli, directory, log };
+  return { accounts, bin, cli, directory, doctorHealthy, log, marketplaceRoot, marketplaceState: join(directory, 'marketplace-root'), oauthHealthy };
 }
 
 function runSetup(current, args) {
@@ -63,6 +79,10 @@ function runSetup(current, args) {
       MAILROOM_SETUP_ACCOUNTS: JSON.stringify(current.accounts),
       MAILROOM_SETUP_CALL_LOG: current.log,
       MAILROOM_SETUP_CLI: current.cli,
+      MAILROOM_SETUP_MARKETPLACE_ROOT: current.marketplaceRoot,
+      MAILROOM_SETUP_MARKETPLACE_STATE: current.marketplaceState,
+      MAILROOM_SETUP_OAUTH_HEALTHY: current.oauthHealthy ? '1' : '0',
+      MAILROOM_SETUP_DOCTOR_HEALTHY: current.doctorHealthy ? '1' : '0',
       MAILROOM_SETUP_TEST: '1',
       PATH: `${current.bin}:${dirname(process.execPath)}:/usr/bin:/bin`,
     },
@@ -114,6 +134,24 @@ test('installs into both clients when both are present', async () => {
   assert.match(log, /claude plugin install mailroom@mailroom-local/);
 });
 
+test('repairs stale marketplace paths before installing', async () => {
+  const current = await fixture(
+    ['codex', 'claude'],
+    [{ alias: 'personal', email: 'user@example.com', status: 'connected' }],
+    '/old/mailroom',
+  );
+  const result = runSetup(current, []);
+
+  assert.equal(result.status, 0, result.stderr);
+  const log = await calls(current);
+  assert.match(log, /codex plugin marketplace remove mailroom-local/);
+  assert.match(log, /codex plugin marketplace add .*mailroom --json/);
+  assert.match(log, /claude plugin marketplace remove mailroom-local/);
+  assert.match(log, /claude plugin marketplace add .*mailroom --scope user/);
+  assert.match(result.stdout, /Updating the Codex marketplace path/);
+  assert.match(result.stdout, /Updating the Claude Code marketplace path/);
+});
+
 test('recovers an account that needs authentication', async () => {
   const current = await fixture(['codex'], [
     { alias: 'work', email: 'user@company.com', status: 'needs_auth' },
@@ -142,10 +180,39 @@ test('supports explicit shared and self-hosted OAuth modes', async () => {
   assert.match(await calls(selfHosted), new RegExp(`cli client set ${clientPath} --delete-source`));
 });
 
+test('repairs missing OAuth configuration with the shared app by default', async () => {
+  const current = await fixture(
+    ['claude'],
+    [{ alias: 'personal', email: 'user@example.com', status: 'connected' }],
+    resolve(import.meta.dirname, '..'),
+    false,
+  );
+  const result = runSetup(current, []);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(await calls(current), /cli client shared/);
+  assert.match(result.stdout, /repairing with the Mailroom shared app/);
+});
+
 test('fails clearly when neither client is installed', async () => {
   const current = await fixture([]);
   const result = runSetup(current, ['--account=personal=user@example.com']);
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Install Codex or Claude Code/);
+});
+
+test('reports an unhealthy doctor result without a setup-stopped error', async () => {
+  const current = await fixture(
+    ['codex'],
+    [],
+    resolve(import.meta.dirname, '..'),
+    true,
+    false,
+  );
+  const result = runSetup(current, ['--doctor']);
+
+  assert.equal(result.status, 2);
+  assert.match(result.stdout, /Overall: needs attention/);
+  assert.doesNotMatch(result.stderr, /Setup stopped/);
 });

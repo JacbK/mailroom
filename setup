@@ -2,6 +2,11 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "$0")" && pwd)"
+codex_app_dir="/Applications/ChatGPT.app/Contents/Resources"
+if ! command -v codex >/dev/null 2>&1 && [[ -x "$codex_app_dir/codex" ]]; then
+  export PATH="$codex_app_dir:$PATH"
+fi
+
 bundled_node_dir="$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin"
 bundled_bin_dir="$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback"
 if [[ -x "$bundled_node_dir/node" ]]; then
