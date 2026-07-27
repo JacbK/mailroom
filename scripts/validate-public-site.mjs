@@ -62,6 +62,21 @@ assert.match(
   /Google API Services User Data Policy/,
   'Privacy page needs the Google Limited Use disclosure.',
 );
+assert.match(
+  privacyHtml,
+  /Data protection/,
+  'Privacy page needs an explicit data protection disclosure.',
+);
+assert.match(
+  privacyHtml,
+  /encrypted at rest by macOS\s+Keychain/,
+  'Privacy page needs to explain how OAuth tokens are protected.',
+);
+assert.match(
+  privacyHtml,
+  /does not write them to a hosted database, analytics service, or\s+application log/,
+  'Privacy page needs to explain how Gmail data is protected from remote retention.',
+);
 
 if (process.env.MAILROOM_REQUIRE_OWNED_DOMAIN === '1') {
   const thirdPartyHosts = [
