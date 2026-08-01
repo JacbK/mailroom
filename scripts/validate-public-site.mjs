@@ -15,10 +15,11 @@ function canonical(html, label) {
   return new URL(match[1]);
 }
 
-const [homeHtml, privacyHtml, termsHtml, styles, copyScript, readme, cname, pluginManifest] = await Promise.all([
+const [homeHtml, privacyHtml, termsHtml, googleHtml, styles, copyScript, readme, cname, pluginManifest] = await Promise.all([
   text(resolve(docs, 'index.html')),
   text(resolve(docs, 'privacy.html')),
   text(resolve(docs, 'terms.html')),
+  text(resolve(docs, 'google.html')),
   text(resolve(docs, 'styles.css')),
   text(resolve(docs, 'copy.js')),
   text(resolve(root, 'README.md')),
@@ -29,12 +30,14 @@ const [homeHtml, privacyHtml, termsHtml, styles, copyScript, readme, cname, plug
 const home = canonical(homeHtml, 'Homepage');
 const privacy = canonical(privacyHtml, 'Privacy page');
 const terms = canonical(termsHtml, 'Terms page');
+const google = canonical(googleHtml, 'Google setup page');
 const expectedPrivacy = new URL('privacy.html', home);
 const expectedTerms = new URL('terms.html', home);
 
 assert.equal(cname, home.hostname, 'GitHub Pages CNAME must match the homepage hostname.');
 assert.equal(privacy.href, expectedPrivacy.href, 'Privacy canonical must use the homepage origin.');
 assert.equal(terms.href, expectedTerms.href, 'Terms canonical must use the homepage origin.');
+assert.equal(google.origin, home.origin, 'Google setup canonical must use the homepage origin.');
 assert.equal(
   pluginManifest.interface.websiteURL,
   home.href,
@@ -55,6 +58,7 @@ for (const [label, html] of [
   ['Homepage', homeHtml],
   ['Privacy page', privacyHtml],
   ['Terms page', termsHtml],
+  ['Google setup page', googleHtml],
 ]) {
   assert.match(html, /http-equiv="Content-Security-Policy"/, `${label} needs a CSP.`);
   assert.doesNotMatch(html, /<(?:iframe|script)[^>]+src="https?:\/\//i, `${label} loads remote code.`);
@@ -65,6 +69,10 @@ assert.match(
   /Google API Services User Data Policy/,
   'Privacy page needs the Google Limited Use disclosure.',
 );
+assert.match(googleHtml, /Mailroom Personal/, 'Google setup page needs the personal app name.');
+assert.match(googleHtml, /Desktop app/, 'Google setup page needs the OAuth client type.');
+assert.match(googleHtml, /gmail\.modify/, 'Google setup page needs the exact Gmail scope.');
+assert.match(googleHtml, /Publish app/, 'Google setup page needs persistent-token guidance.');
 
 const homepagePrompt = homeHtml.match(/<span id="install-prompt">([^<]+)<\/span>/)?.[1]?.trim();
 const readmePrompt = readme.match(/\*\*Paste this into Codex, Claude Code, or Cursor:\*\*\s+```text\s+([^\n]+)\s+```/)?.[1]?.trim();

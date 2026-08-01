@@ -49,7 +49,7 @@ export class OAuthClientStore {
         throw new MailroomError(
           'AUTH_REQUIRED',
           'The active Google OAuth configuration is invalid.',
-          'Run `./setup --shared` or `./setup --self-host <oauth-json>`.',
+          'Run `./setup --personal` or `./setup --self-host <oauth-json>`.',
           { cause: error },
         );
       }
@@ -64,9 +64,11 @@ export class OAuthClientStore {
       return selection;
     }
 
-    const selection = this.sharedSelection();
-    await this.activate(selection);
-    return selection;
+    throw new MailroomError(
+      'AUTH_REQUIRED',
+      'A personal Google OAuth app is not configured.',
+      'Run `./setup --personal`. Mailroom will open the setup guide and securely import the downloaded Desktop OAuth JSON.',
+    );
   }
 
   public async getActiveClient(): Promise<{
@@ -83,8 +85,8 @@ export class OAuthClientStore {
       if (selection.fingerprint !== expected.fingerprint) {
         throw new MailroomError(
           'AUTH_REQUIRED',
-          'The bundled Mailroom OAuth client changed.',
-          'Run `./setup --shared` and reconnect your Gmail accounts.',
+          'The legacy shared Mailroom OAuth client changed.',
+          'Run `./setup --personal` and reconnect your Gmail accounts.',
         );
       }
       return SHARED_OAUTH_CLIENT;
@@ -94,7 +96,7 @@ export class OAuthClientStore {
     if (!raw) {
       throw new MailroomError(
         'AUTH_REQUIRED',
-        'The self-hosted Google OAuth client is missing.',
+        'The personal Google OAuth client is missing.',
         'Run `./setup --self-host <oauth-json>`.',
       );
     }
@@ -102,7 +104,7 @@ export class OAuthClientStore {
     if (fingerprintOAuthClient(client) !== selection.fingerprint) {
       throw new MailroomError(
         'AUTH_REQUIRED',
-        'The self-hosted Google OAuth client does not match the active configuration.',
+        'The personal Google OAuth client does not match the active configuration.',
         'Run `./setup --self-host <oauth-json>` again.',
       );
     }
@@ -145,7 +147,7 @@ export class OAuthClientStore {
   }
 
   public modeLabel(mode: OAuthMode): string {
-    return mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app';
+    return mode === 'shared' ? 'legacy shared app' : 'personal app';
   }
 
   private parseClient(raw: string): OAuthClientConfig {
@@ -155,7 +157,7 @@ export class OAuthClientStore {
       throw new MailroomError(
         'AUTH_REQUIRED',
         'The Google OAuth client stored in Keychain is invalid.',
-        'Run `./setup --shared` or `./setup --self-host <oauth-json>`.',
+        'Run `./setup --personal` or `./setup --self-host <oauth-json>`.',
         { cause: error },
       );
     }

@@ -1,12 +1,12 @@
 # Public release
 
-Do not change repository visibility until the shared Google app is approved for `gmail.modify` and its required security assessment is complete.
+Public releases use a personal Google OAuth project per user. Do not advertise or select Mailroom's legacy shared OAuth client for new installs.
 
 ## Before changing visibility
 
 - [x] Finish configuring `mailroom.jacobkieser.me`: verify the parent domain in GitHub, set the Pages custom domain, add the Namecheap CNAME, and enable HTTPS.
 - [x] Update every public URL and confirm `MAILROOM_REQUIRE_OWNED_DOMAIN=1 pnpm validate:site` passes.
-- Confirm Branding and Data Access are approved in Google Verification Center.
+- [x] Make personal Google OAuth the guided default and keep the downloaded client and refresh tokens in Keychain.
 - [x] Run `pnpm release:check` with the dedicated `personal` and `work` test accounts. This sends marked mail between them and moves it to Trash.
 - Test the README install prompt from a clean directory in current Codex and Claude Code.
 - Confirm `./setup --doctor` is healthy after restarting each client.
@@ -28,3 +28,4 @@ Do not change repository visibility until the shared Google app is approved for 
 - Tag the tested version from `main`.
 - Publish matching release notes with setup, upgrade, and uninstall commands.
 - Re-test the public README and policy links without a signed-in GitHub session.
+- Test the personal Google setup guide from a clean Google Cloud project.

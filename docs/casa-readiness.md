@@ -1,6 +1,6 @@
 # CASA AL1 readiness
 
-Working evidence packet for Mailroom's annual ADA-CASA AL1 assessment.
+Archived evidence packet for the legacy shared OAuth app. Personal-use OAuth is now the supported launch path; revive this packet only if shared OAuth returns.
 
 ## Assessment facts
 

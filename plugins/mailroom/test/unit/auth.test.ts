@@ -48,13 +48,15 @@ describe('OAuth identity verification', () => {
     );
     expect(error).toBeInstanceOf(MailroomError);
     if (!(error instanceof MailroomError)) throw new Error('Expected MailroomError.');
-    expect(error.recovery).toContain('./setup --self-host');
+    expect(error.recovery).toContain('./setup --personal');
     expect(normalizeOAuthFailure(new Error('access_denied'), 'self-hosted'))
       .toEqual(new Error('access_denied'));
   });
 
   it('explains the one-time permission upgrade for old credentials', async () => {
     const keychain = new MemorySecretStore();
+    const clients = new OAuthClientStore(keychain);
+    await clients.activate(clients.sharedSelection());
     await keychain.set('account:work', JSON.stringify({
       email: 'work@example.com',
       refreshToken: 'old-read-token',
@@ -70,6 +72,8 @@ describe('OAuth identity verification', () => {
 
   it('accepts credentials with the Gmail modify scope', async () => {
     const keychain = new MemorySecretStore();
+    const clients = new OAuthClientStore(keychain);
+    await clients.activate(clients.sharedSelection());
     await keychain.set('account:work', JSON.stringify({
       email: 'work@example.com',
       refreshToken: 'modify-token',
@@ -87,6 +91,7 @@ describe('OAuth identity verification', () => {
     const keychain = new MemorySecretStore();
     const clients = new OAuthClientStore(keychain);
     const selection = clients.sharedSelection();
+    await clients.activate(selection);
     await keychain.set(clients.credentialKey(selection, 'work'), JSON.stringify({
       email: 'work@example.com',
       refreshToken: 'modify-token',

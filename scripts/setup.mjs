@@ -7,6 +7,7 @@ import {
   renameSync,
   writeFileSync,
 } from 'node:fs';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
@@ -33,6 +34,14 @@ const legacyMarketplace = 'gmail-switchboard-local';
 const legacyPlugin = `gmail-switchboard@${legacyMarketplace}`;
 const rawArgs = process.argv.slice(2);
 const args = new Set(rawArgs);
+const personalSetupUrl = 'https://mailroom.jacobkieser.me/google.html';
+const downloadsDirectory = process.env.MAILROOM_SETUP_TEST === '1'
+  && process.env.MAILROOM_SETUP_DOWNLOADS
+  ? resolve(process.env.MAILROOM_SETUP_DOWNLOADS)
+  : join(homedir(), 'Downloads');
+const personalWaitMs = process.env.MAILROOM_SETUP_TEST === '1'
+  ? Number(process.env.MAILROOM_SETUP_PERSONAL_WAIT_MS ?? 0)
+  : 15 * 60 * 1_000;
 
 function optionValue(name, valueDescription = 'a value') {
   const inline = rawArgs.filter((value) => value.startsWith(`${name}=`));
@@ -52,7 +61,7 @@ function optionValue(name, valueDescription = 'a value') {
 }
 
 function validateArguments() {
-  const standalone = new Set(['--shared', '--reauth', '--doctor', '--uninstall', '--help', '-h']);
+  const standalone = new Set(['--personal', '--shared', '--reauth', '--doctor', '--uninstall', '--help', '-h']);
   const withValues = new Set(['--account', '--self-host']);
   for (let index = 0; index < rawArgs.length; index += 1) {
     const value = rawArgs[index];
@@ -75,9 +84,13 @@ function validateArguments() {
     throw new Error(`${oneShot[0]} cannot be combined with other setup options.`);
   }
 
-  const selfHosted = optionValue('--self-host', 'a Google OAuth JSON file path');
-  if (selfHosted && args.has('--shared')) {
-    throw new Error('Choose either --shared or --self-host, not both.');
+  const oauthModes = [
+    args.has('--personal') ? '--personal' : null,
+    args.has('--shared') ? '--shared' : null,
+    optionValue('--self-host', 'a Google OAuth JSON file path') ? '--self-host' : null,
+  ].filter(Boolean);
+  if (oauthModes.length > 1) {
+    throw new Error('Choose only one of --personal, --shared, or --self-host.');
   }
 }
 
@@ -86,8 +99,8 @@ function printUsage() {
 
   ./setup --account work=you@company.com --account personal=you@gmail.com
   ./setup
+  ./setup --personal
   ./setup --self-host /path/to/google-oauth.json
-  ./setup --shared
   ./setup --reauth
   ./setup --doctor
   ./setup --uninstall
@@ -330,20 +343,107 @@ function uninstallPlugins() {
   removeLegacyPlugin();
 }
 
-function ensureOAuthClient() {
+function validPersonalClient(value) {
+  return Boolean(
+    value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && value.installed
+    && typeof value.installed === 'object'
+    && typeof value.installed.client_id === 'string'
+    && value.installed.client_id.endsWith('.apps.googleusercontent.com')
+    && typeof value.installed.client_secret === 'string'
+    && value.installed.client_secret.length > 0,
+  );
+}
+
+async function personalClientCandidates(notBefore) {
+  let entries;
+  try {
+    entries = await readdir(downloadsDirectory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const candidates = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !/^client_secret.*\.json$/i.test(entry.name)) continue;
+    const path = join(downloadsDirectory, entry.name);
+    try {
+      const [metadata, parsed] = await Promise.all([
+        stat(path),
+        readFile(path, 'utf8').then(JSON.parse),
+      ]);
+      if (metadata.mtimeMs >= notBefore && validPersonalClient(parsed)) {
+        candidates.push({ path, modified: metadata.mtimeMs });
+      }
+    } catch {
+      // Ignore unrelated or partially downloaded JSON files.
+    }
+  }
+  return candidates.sort((left, right) => right.modified - left.modified);
+}
+
+function openPersonalSetupGuide() {
+  process.stdout.write([
+    'Mailroom needs a personal Google app. This keeps full Gmail access free and under your control.',
+    `Setup guide: ${personalSetupUrl}`,
+    '',
+  ].join('\n'));
+  if (process.env.MAILROOM_SETUP_TEST === '1') return;
+  spawnSync('/usr/bin/open', [personalSetupUrl], { stdio: 'ignore' });
+}
+
+async function waitForPersonalClient() {
+  const started = Date.now();
+  const recent = await personalClientCandidates(started - 5 * 60 * 1_000);
+  if (recent.length === 1) return recent[0].path;
+  if (recent.length > 1) {
+    throw new Error('More than one recent Google OAuth download was found. Rerun with --self-host /path/to/client_secret.json.');
+  }
+
+  openPersonalSetupGuide();
+  if (personalWaitMs > 0) {
+    process.stdout.write('Waiting for the Desktop OAuth JSON to appear in Downloads…\n');
+  }
+  const deadline = started + personalWaitMs;
+  while (Date.now() < deadline) {
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(2_000, deadline - Date.now())));
+    const found = await personalClientCandidates(started);
+    if (found.length === 1) return found[0].path;
+    if (found.length > 1) {
+      throw new Error('More than one new Google OAuth download was found. Rerun with --self-host /path/to/client_secret.json.');
+    }
+  }
+  throw new Error(`Download the Desktop OAuth JSON using ${personalSetupUrl}, then rerun ./setup --personal. You can also use ./setup --self-host /path/to/client_secret.json.`);
+}
+
+async function enablePersonalClient() {
+  const path = await waitForPersonalClient();
+  process.stdout.write(`Google OAuth: importing ${path.replace(`${homedir()}/`, '~/')}\n`);
+  run(process.execPath, [cli, 'client', 'set', path, '--delete-source']);
+}
+
+async function ensureOAuthClient() {
   const selfHosted = optionValue('--self-host', 'a Google OAuth JSON file path');
   if (selfHosted) {
     run(process.execPath, [cli, 'client', 'set', selfHosted, '--delete-source']);
+  } else if (args.has('--personal')) {
+    const status = json(process.execPath, [cli, 'client', 'status', '--json'], { allowFailure: true });
+    if (status?.ok && status.mode === 'self-hosted') {
+      process.stdout.write('Google OAuth: personal app\n');
+      return;
+    }
+    await enablePersonalClient();
   } else if (args.has('--shared')) {
+    process.stdout.write('Warning: the shared Mailroom Google app is legacy and may stop accepting sign-ins. Use ./setup --personal instead.\n');
     run(process.execPath, [cli, 'client', 'shared']);
   } else {
     const status = json(process.execPath, [cli, 'client', 'status', '--json'], { allowFailure: true });
     if (!status?.ok) {
-      process.stdout.write('Google OAuth: repairing with the Mailroom shared app\n');
-      run(process.execPath, [cli, 'client', 'shared']);
+      await enablePersonalClient();
       return;
     }
-    process.stdout.write(`Google OAuth: ${status.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'}\n`);
+    process.stdout.write(`Google OAuth: ${status.mode === 'shared' ? 'legacy shared app — run ./setup --personal to migrate' : 'personal app'}\n`);
   }
 }
 
@@ -475,7 +575,7 @@ async function main() {
   process.stdout.write('[1/4] Installing the plugin\n');
   installPlugins();
   process.stdout.write('\n[2/4] Checking Google OAuth\n');
-  ensureOAuthClient();
+  await ensureOAuthClient();
   process.stdout.write('\n[3/4] Connecting Gmail accounts\n');
   await ensureAccounts(requested, args.has('--reauth'));
   process.stdout.write('\n[4/4] Verifying the installation\n');

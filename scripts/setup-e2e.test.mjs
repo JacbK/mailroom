@@ -100,6 +100,8 @@ function runSetup(current, args) {
       MAILROOM_SETUP_MARKETPLACE_STATE: current.marketplaceState,
       MAILROOM_SETUP_OAUTH_HEALTHY: current.oauthHealthy ? '1' : '0',
       MAILROOM_SETUP_DOCTOR_HEALTHY: current.doctorHealthy ? '1' : '0',
+      MAILROOM_SETUP_DOWNLOADS: current.directory,
+      MAILROOM_SETUP_PERSONAL_WAIT_MS: '0',
       MAILROOM_SETUP_TEST: '1',
       PATH: `${current.bin}:${dirname(process.execPath)}:/usr/bin:/bin`,
     },
@@ -233,13 +235,31 @@ test('targeted reauth does not reconnect unrelated accounts', async () => {
   assert.doesNotMatch(log, /cli auth reauth personal/);
 });
 
-test('supports explicit shared and self-hosted OAuth modes', async () => {
+test('supports legacy shared, guided personal, and explicit self-hosted OAuth modes', async () => {
   const shared = await fixture(['codex'], [
     { alias: 'work', email: 'user@company.com', status: 'connected' },
   ]);
   const sharedResult = runSetup(shared, ['--shared']);
   assert.equal(sharedResult.status, 0, sharedResult.stderr);
   assert.match(await calls(shared), /cli client shared/);
+  assert.match(sharedResult.stdout, /shared Mailroom Google app is legacy/);
+
+  const personal = await fixture(['codex'], [
+    { alias: 'work', email: 'user@company.com', status: 'connected' },
+  ]);
+  const personalClientPath = join(personal.directory, 'client_secret_mailroom.json');
+  await writeFile(personalClientPath, JSON.stringify({
+    installed: {
+      client_id: 'personal.apps.googleusercontent.com',
+      client_secret: 'not-a-real-secret',
+    },
+  }));
+  const personalResult = runSetup(personal, ['--personal']);
+  assert.equal(personalResult.status, 0, personalResult.stderr);
+  assert.match(
+    await calls(personal),
+    new RegExp(`cli client set ${personalClientPath} --delete-source`),
+  );
 
   const selfHosted = await fixture(['codex'], [
     { alias: 'work', email: 'user@company.com', status: 'connected' },
@@ -251,7 +271,7 @@ test('supports explicit shared and self-hosted OAuth modes', async () => {
   assert.match(await calls(selfHosted), new RegExp(`cli client set ${clientPath} --delete-source`));
 });
 
-test('repairs missing OAuth configuration with the shared app by default', async () => {
+test('guides a fresh install to a personal Google app instead of the shared app', async () => {
   const current = await fixture(
     ['claude'],
     [{ alias: 'personal', email: 'user@example.com', status: 'connected' }],
@@ -260,9 +280,33 @@ test('repairs missing OAuth configuration with the shared app by default', async
   );
   const result = runSetup(current, []);
 
+  assert.equal(result.status, 1);
+  assert.doesNotMatch(await calls(current), /cli client shared/);
+  assert.match(result.stdout, /Mailroom needs a personal Google app/);
+  assert.match(result.stderr, /google\.html/);
+});
+
+test('automatically imports a recent personal client on a fresh install', async () => {
+  const current = await fixture(
+    ['claude'],
+    [{ alias: 'personal', email: 'user@example.com', status: 'connected' }],
+    repositoryRoot,
+    false,
+  );
+  const clientPath = join(current.directory, 'client_secret_fresh.json');
+  await writeFile(clientPath, JSON.stringify({
+    installed: {
+      client_id: 'fresh.apps.googleusercontent.com',
+      client_secret: 'not-a-real-secret',
+    },
+  }));
+
+  const result = runSetup(current, []);
+
   assert.equal(result.status, 0, result.stderr);
-  assert.match(await calls(current), /cli client shared/);
-  assert.match(result.stdout, /repairing with the Mailroom shared app/);
+  const log = await calls(current);
+  assert.match(log, new RegExp(`cli client set ${clientPath} --delete-source`));
+  assert.doesNotMatch(log, /cli client shared/);
 });
 
 test('fails clearly when neither client is installed', async () => {
@@ -296,8 +340,8 @@ test('rejects unknown and conflicting options before changing anything', async (
   assert.equal(await calls(unknown), '');
 
   const conflicting = await fixture(['codex']);
-  const conflictingResult = runSetup(conflicting, ['--shared', '--self-host', '/tmp/oauth.json']);
+  const conflictingResult = runSetup(conflicting, ['--personal', '--self-host', '/tmp/oauth.json']);
   assert.equal(conflictingResult.status, 1);
-  assert.match(conflictingResult.stderr, /Choose either --shared or --self-host/);
+  assert.match(conflictingResult.stderr, /Choose only one of --personal, --shared, or --self-host/);
   assert.equal(await calls(conflicting), '');
 });

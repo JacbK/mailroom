@@ -1,6 +1,6 @@
 # Google verification
 
-Release gate for the shared Mailroom Google app.
+Historical record for the legacy shared Mailroom Google app.
 
 ## Console
 
@@ -13,6 +13,12 @@ Release gate for the shared Mailroom Google app.
 - Target terms: `https://mailroom.jacobkieser.me/terms.html`
 
 ## Current status
+
+- On July 31, Google confirmed that free self-scans are no longer available for new CASA submissions. Completing shared restricted-scope verification requires a paid authorized assessor, with Google's TAC Security discount still below $1,000.
+- Mailroom is retiring shared OAuth for new installs. The launch path now uses one personal-use Google OAuth project per user, preserving `gmail.modify` without making users share Jacob's project or its 100-user cap.
+- The alternatives and their policy tradeoffs are recorded in [Why Mailroom uses personal OAuth](oauth-options.md).
+- The installer opens a guided setup page, watches Downloads for a valid Desktop OAuth JSON, imports it into Keychain, deletes the downloaded file, and continues sign-in. Existing shared connections receive migration guidance.
+- Canceling the shared project's pending verification and removing its production OAuth client remain manual Cloud Console actions.
 
 - Google replied again on July 24 because the first replacement video was not full-motion and the privacy policy did not describe data-protection mechanisms.
 - Google replied on July 30 because the privacy policy did not explicitly identify every party that can receive Google user data.
@@ -43,7 +49,8 @@ Release gate for the shared Mailroom Google app.
    - each write reflected in the source Gmail account;
    - `./setup --doctor`, macOS Keychain storage, and uninstall/revoke.
 7. [x] Add the new video URL to Data Access, confirm the verification request is in progress, and reply directly to the latest reviewer message with the video and privacy remediation.
-8. [ ] Wait for Google's written AL1 pathway and assessment-profile instructions. Do not purchase a lab or submit deprecated Tier 2 self-scan evidence before Google assigns the current process.
-9. [ ] Complete the assigned AL1 assessment by October 28, 2026, using [the CASA readiness packet](casa-readiness.md).
+8. [x] Confirm whether a no-cost self-assessment remains available. Google said it does not.
+9. [x] Replace shared OAuth as the launch path with guided personal OAuth.
+10. [ ] After confirming migration, cancel the verification request and remove the legacy production OAuth client in Google Cloud Console.
 
-Do not make the repository public or advertise shared OAuth until Google approves the restricted scope and the required security assessment is complete.
+Do not advertise shared OAuth. Personal-use OAuth is the supported launch path.

@@ -42,10 +42,11 @@ client
 
 client
   .command('shared')
-  .description('Use the shared Mailroom Google app.')
+  .description('Use the legacy shared Mailroom Google app.')
   .action(async () => {
+    process.stderr.write('Warning: shared OAuth is legacy. Use `./setup --personal` for reliable sign-in.\n');
     const changed = await new AuthManager().useSharedClient();
-    process.stdout.write(`Mailroom shared Google app ${changed ? 'enabled' : 'already active'}.\n`);
+    process.stdout.write(`Legacy shared Google app ${changed ? 'enabled' : 'already active'}.\n`);
   });
 
 client
@@ -57,7 +58,7 @@ client
     process.stdout.write(options.json
       ? `${JSON.stringify(status)}\n`
       : `Google OAuth: ${status.ok
-        ? status.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'
+        ? status.mode === 'shared' ? 'legacy shared app' : 'personal app'
         : 'needs setup'}\n`);
     if (!status.ok) process.exitCode = 2;
   });

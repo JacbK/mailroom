@@ -26,7 +26,7 @@
       <p class="legal-intro">
         Mailroom runs locally and does not store Gmail data on a hosted Mailroom server.
       </p>
-      <p class="updated">Last updated July 31, 2026</p>
+      <p class="updated">Last updated August 1, 2026</p>
 
       <div class="legal-grid">
         <section class="card">
@@ -98,11 +98,12 @@
         <section class="card">
           <h2>Local storage</h2>
           <p>
-            The Mailroom Google app ID ships with the plugin. It cannot access
-            your account by itself. Your OAuth tokens go in macOS Keychain.
-            Account names and non-secret config stay in a local file readable
-            only by your macOS user. Requested email can still exist in your
-            local agent session while a task runs.
+            You create a personal Google OAuth app in your own Google Cloud
+            project. Mailroom moves its downloaded Desktop OAuth file into
+            macOS Keychain and deletes the downloaded copy. Your OAuth tokens
+            also stay in Keychain. Account names and non-secret config stay in
+            a local file readable only by your macOS user. Requested email can
+            still exist in your local agent session while a task runs.
           </p>
         </section>
 

@@ -218,7 +218,7 @@ export class AuthManager {
     mode: OAuthMode,
     customClient?: OAuthClientConfig,
   ): Promise<boolean> {
-    const previous = await this.clients.getSelection();
+    const previous = await this.clients.getSelection().catch(() => null);
     let target: OAuthClientSelection;
     if (mode === 'shared') {
       target = this.clients.sharedSelection();
@@ -226,8 +226,8 @@ export class AuthManager {
       if (!customClient) throw new Error('A self-hosted OAuth client is required.');
       target = await this.clients.prepareSelfHosted(customClient);
     }
-    if (previous.mode === target.mode && previous.fingerprint === target.fingerprint) return false;
-    if (previous.fingerprint === target.fingerprint) {
+    if (previous?.mode === target.mode && previous.fingerprint === target.fingerprint) return false;
+    if (previous?.fingerprint === target.fingerprint) {
       await this.clients.activate(target);
       await this.clients.deleteClient(previous);
       return true;
@@ -265,7 +265,9 @@ export class AuthManager {
       await this.clients.deleteSelection(target, credentials.map((item) => item.alias));
       throw error;
     }
-    await this.clients.deleteSelection(previous, accounts.map((account) => account.alias));
+    if (previous) {
+      await this.clients.deleteSelection(previous, accounts.map((account) => account.alias));
+    }
     return true;
   }
 
@@ -390,7 +392,7 @@ export function normalizeOAuthFailure(error: unknown, mode: OAuthMode): unknown 
   return new MailroomError(
     'AUTH_REQUIRED',
     'Google did not allow Mailroom to finish sign-in.',
-    'If you cancelled, rerun setup. If Google says Mailroom is blocked or unverified, use `./setup --self-host <oauth-json>`.',
+    'If you cancelled, rerun setup. If Google blocks the shared app, run `./setup --personal` to use a Google app you control.',
     { cause: error },
   );
 }

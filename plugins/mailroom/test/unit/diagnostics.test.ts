@@ -61,7 +61,7 @@ describe('doctor diagnostics', () => {
     const text = doctorText(report, false);
 
     expect(text).toContain('Run Mailroom on macOS');
-    expect(text).toContain('Run ./setup --shared');
+    expect(text).toContain('Run ./setup --personal');
     expect(text).toContain('if work still fails');
 
     const empty = doctorText({ ...report, accounts: [], account_count: 0 }, true);
@@ -79,7 +79,7 @@ describe('doctor diagnostics', () => {
     };
 
     const text = doctorText(report, false);
-    expect(text).toContain('Google OAuth: self-hosted app');
+    expect(text).toContain('Google OAuth: personal app');
     expect(text).toContain('Overall: healthy');
     expect(text).not.toContain('Next:');
   });

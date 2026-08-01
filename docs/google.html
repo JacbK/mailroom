@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; connect-src 'none'; form-action 'none'; object-src 'none'; style-src 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="canonical" href="https://mailroom.jacobkieser.me/google.html" />
+    <meta name="description" content="Connect Mailroom to a personal Google OAuth app." />
+    <title>Connect Google | Mailroom</title>
+    <link rel="stylesheet" href="./styles.css?v=20260801" />
+  </head>
+  <body class="setup-page">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="logo" href="./">Mailroom</a>
+      <a class="nav-link" href="./privacy.html">Privacy</a>
+    </nav>
+
+    <main class="legal-page">
+      <p class="hero-label">Mailroom setup</p>
+      <h1>Connect your personal Google app</h1>
+      <p class="legal-intro">
+        Keep the setup command running. It will find the OAuth file when Google downloads it.
+      </p>
+
+      <div class="legal-grid">
+        <section class="card">
+          <h2>1. Create a project</h2>
+          <p>
+            <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener noreferrer">Create a Google Cloud project</a>
+            named <strong>Mailroom Personal</strong>.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>2. Enable Gmail</h2>
+          <p>
+            Select the new project, then <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" rel="noopener noreferrer">enable the Gmail API</a>.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>3. Configure access</h2>
+          <p>
+            Open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener noreferrer">Google Auth Platform</a>.
+            Use <strong>Mailroom Personal</strong> for the app name and choose <strong>External</strong> unless this is for one Workspace organization.
+          </p>
+          <p>
+            Under <a href="https://console.cloud.google.com/auth/scopes" target="_blank" rel="noopener noreferrer">Data Access</a>, add
+            <code>https://www.googleapis.com/auth/gmail.modify</code>.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>4. Keep sign-in working</h2>
+          <p>
+            Under <a href="https://console.cloud.google.com/auth/audience" target="_blank" rel="noopener noreferrer">Audience</a>, click
+            <strong>Publish app</strong>. Leave it unverified and do not submit a verification request.
+            Testing mode expires Gmail access after seven days.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>5. Download the client</h2>
+          <p>
+            Under <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener noreferrer">Clients</a>, create a
+            <strong>Desktop app</strong> named <strong>Mailroom on my Mac</strong>, then download its JSON.
+            Mailroom will import it from Downloads, delete the file, and start Google sign-in.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Expected warning</h2>
+          <p>
+            Google may say it has not verified your personal app. Choose <strong>Advanced</strong>,
+            continue to <strong>Mailroom Personal</strong>, review the Gmail permission, and allow it.
+          </p>
+        </section>
+      </div>
+
+      <p class="legal-intro">
+        Stuck? Use the <a href="https://github.com/JacbK/mailroom/blob/main/docs/self-hosting.md" target="_blank" rel="noopener noreferrer">full setup guide</a>.
+        Google documents the <a href="https://support.google.com/cloud/answer/13464323" target="_blank" rel="noopener noreferrer">personal-use exception</a>
+        and <a href="https://support.google.com/cloud/answer/15549945" target="_blank" rel="noopener noreferrer">seven-day Testing limit</a>.
+      </p>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <a href="./">Mailroom</a>
+        <nav aria-label="Legal">
+          <a href="./privacy.html">Privacy</a>
+          <a href="./terms.html">Terms</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

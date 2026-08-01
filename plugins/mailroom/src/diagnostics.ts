@@ -57,7 +57,7 @@ export function doctorText(report: DoctorReport, redact: boolean): string {
   const recovery = [
     ...(!report.node.ok ? ['Install Node 22 or newer, then rerun ./mailroom doctor.'] : []),
     ...(!report.platform.ok ? ['Run Mailroom on macOS so it can use Keychain.'] : []),
-    ...(!report.oauth_client.ok ? ['Run ./setup --shared, or configure a self-hosted Google app.'] : []),
+    ...(!report.oauth_client.ok ? ['Run ./setup --personal to configure your personal Google app.'] : []),
     ...(report.accounts.length === 0 ? ['Run ./setup --account alias=you@example.com.'] : []),
     ...accounts.flatMap((account) => {
       if (account.status === 'needs_auth') {
@@ -77,7 +77,7 @@ export function doctorText(report: DoctorReport, redact: boolean): string {
     `Node ${report.node.version}: ${report.node.ok ? 'ok' : 'needs Node 22+'}`,
     `macOS Keychain: ${report.platform.ok ? 'ok' : 'unsupported platform'}`,
     `Google OAuth: ${report.oauth_client.ok
-      ? report.oauth_client.mode === 'shared' ? 'Mailroom shared app' : 'self-hosted app'
+      ? report.oauth_client.mode === 'shared' ? 'legacy shared app' : 'personal app'
       : 'needs setup'}`,
     ...(accounts.length > 0
       ? accounts.map((account) => redact

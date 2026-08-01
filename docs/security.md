@@ -5,7 +5,7 @@ Mailroom is local. It can read and change Gmail only through explicit MCP tool c
 ## Boundaries
 
 - OAuth scope: `https://www.googleapis.com/auth/gmail.modify`
-- OAuth apps: bundled Mailroom Desktop client by default, or a user-provided Desktop client
+- OAuth app: a user-owned Google Desktop client stored in macOS Keychain
 - Credential store: macOS Keychain
 - Transport: local stdio
 - Gmail mutations: drafts, sends, forwards, labels, archive, and recoverable Trash
@@ -13,7 +13,7 @@ Mailroom is local. It can read and change Gmail only through explicit MCP tool c
 - Remote HTML resources: never loaded
 - Agent data path: requested Gmail results are returned to Codex or Claude and may be processed by that provider
 
-Google classifies `gmail.modify` as a restricted scope. It allows the connector-parity features without permanent deletion. OAuth credentials, refresh tokens, configuration, MIME conversion, and the MCP transport stay local. Anything a tool returns is sent to the active Codex or Claude client and may be processed under that provider's data terms and controls. The bundled app is still completing Google's verification and required security review; shared sign-in may be blocked until those reviews finish.
+Google classifies `gmail.modify` as a restricted scope. It allows the connector-parity features without permanent deletion. Each user supplies a personal-use Google Desktop OAuth client rather than sharing Mailroom's developer project. OAuth credentials, refresh tokens, configuration, MIME conversion, and the MCP transport stay local. Anything a tool returns is sent to the active Codex or Claude client and may be processed under that provider's data terms and controls.
 
 ## Threat model
 
@@ -37,6 +37,6 @@ Google classifies `gmail.modify` as a restricted scope. It allows the connector-
 
 `./setup --uninstall` removes the Codex and Claude plugins and offers to revoke Google access and delete every Keychain credential. Individual accounts can be removed with `./mailroom auth remove <alias>`.
 
-The bundled Desktop client identifies Mailroom but cannot grant account access. Refresh tokens stay in Keychain. In self-hosted mode, the downloaded Google OAuth JSON exists in plaintext only until setup moves it into Keychain and deletes the source file.
+The personal Desktop client identifies the user's private Google project but cannot grant account access by itself. Refresh tokens stay in Keychain. The downloaded Google OAuth JSON exists in plaintext only until setup moves it into Keychain and deletes the source file.
 
 Google treats Desktop client secrets as public application identifiers. Someone can copy Mailroom's client ID and secret, but PKCE prevents intercepted authorization codes from being reused and Mailroom verifies the exact signed-in address before saving a token. Google consent still identifies the requesting client, so users should install Mailroom only from this repository.

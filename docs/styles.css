@@ -266,6 +266,17 @@ main {
   line-height: 0.9;
 }
 
+.setup-page .legal-page h1 {
+  max-width: 800px;
+  font-size: clamp(2.75rem, 6vw, 5rem);
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+.setup-page .legal-intro {
+  max-width: 720px;
+}
+
 .updated {
   margin: 16px 0 34px;
   color: var(--soft);
@@ -303,6 +314,7 @@ main {
 
 .card code {
   color: var(--accent);
+  overflow-wrap: anywhere;
 }
 
 footer {
@@ -365,11 +377,12 @@ footer {
   }
 
   .legal-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .card {
     min-height: 0;
+    min-width: 0;
   }
 
   .footer-inner {

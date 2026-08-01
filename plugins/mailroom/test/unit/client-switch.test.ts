@@ -52,12 +52,17 @@ afterEach(async () => {
 });
 
 describe('OAuth client selection', () => {
-  it('uses the shared Mailroom app for a fresh install', async () => {
-    const { clients } = await setup();
+  it('requires a personal Google app for a fresh install', async () => {
+    const { clients, config, keychain } = await setup();
 
-    await expect(clients.getSelection()).resolves.toEqual(clients.sharedSelection());
-    await expect(clients.getActiveClient()).resolves.toMatchObject({
-      selection: { mode: 'shared' },
+    await expect(clients.getSelection()).rejects.toMatchObject({
+      code: 'AUTH_REQUIRED',
+    });
+    await expect(new AuthManager(config, keychain).clientStatus()).resolves.toEqual({
+      configured: false,
+      mode: null,
+      fingerprint: null,
+      ok: false,
     });
   });
 
