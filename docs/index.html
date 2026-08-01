@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; connect-src 'none'; form-action 'none'; object-src 'none'; script-src 'self'; style-src 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="canonical" href="https://mailroom.jacobkieser.me/" />
+    <meta
+      name="google-site-verification"
+      content="dR5oWCzwpZ8jFe8oMC1tcqzI8FqnC1gzHsXnktut1IU"
+    />
+    <meta
+      name="description"
+      content="Use multiple Gmail accounts from Codex, Claude Code, or Cursor with one local MCP."
+    />
+    <title>Mailroom by Jacob Kieser</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="home-page">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="logo" href="./" aria-label="Mailroom">
+        <span class="mail-icon" aria-hidden="true"></span>
+        <span class="wordmark">Mailroom</span>
+      </a>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <h1>Multiple Gmail accounts, one MCP.</h1>
+          <p class="hero-copy">
+            Codex only connects one Gmail account at a time. Mailroom gives Codex,
+            Claude Code, and Cursor the normal Gmail tools across all of yours. It runs
+            locally on macOS.
+          </p>
+          <ul class="runtime-notes">
+            <li>macOS <span aria-hidden="true">·</span></li>
+            <li>Node 22+ <span aria-hidden="true">·</span></li>
+            <li>tokens in Keychain</li>
+          </ul>
+          <div class="home-legal">
+            <a href="https://github.com/JacbK/mailroom" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="./privacy.html">Privacy</a>
+            <a href="./terms.html">Terms</a>
+          </div>
+        </div>
+
+        <div class="prompt-shell" id="install">
+          <div class="prompt-head">
+            <span>Paste into Codex, Claude Code, or Cursor</span>
+            <button
+              class="copy-button"
+              type="button"
+              aria-label="Copy install prompt"
+              data-copy-target="install-prompt"
+              data-copy-button
+              hidden
+            >
+              <span class="copy-icon" aria-hidden="true"></span>
+              <span data-copy-label aria-hidden="true">Copy</span>
+            </button>
+            <span class="visually-hidden" role="status" aria-live="polite" data-copy-status></span>
+          </div>
+          <pre class="terminal"><code><span id="install-prompt">Install or safely update Mailroom from https://github.com/JacbK/mailroom in ~/.mailroom. Ask which Gmail accounts I want to add, then run ~/.mailroom/setup --shared with one --account alias=email flag for each account. Keep going until ~/.mailroom/setup --doctor is healthy. I'll handle Google sign-ins.</span></code></pre>
+        </div>
+      </section>
+    </main>
+
+    <script src="./copy.js"></script>
+  </body>
+</html>

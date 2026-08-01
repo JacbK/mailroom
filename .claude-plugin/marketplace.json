@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "mailroom-local",
+  "description": "Mailroom plugins for Codex and Claude Code.",
+  "owner": {
+    "name": "Jacob Kieser"
+  },
+  "plugins": [
+    {
+      "name": "mailroom",
+      "source": "./plugins/mailroom",
+      "description": "Search and manage multiple Gmail accounts without mixing them up.",
+      "version": "0.4.0",
+      "category": "productivity",
+      "strict": true
+    }
+  ]
+}

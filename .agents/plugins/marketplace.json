@@ -1,0 +1,20 @@
+{
+  "name": "mailroom-local",
+  "interface": {
+    "displayName": "Mailroom Local"
+  },
+  "plugins": [
+    {
+      "name": "mailroom",
+      "source": {
+        "source": "local",
+        "path": "./plugins/mailroom"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

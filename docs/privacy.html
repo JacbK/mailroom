@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; connect-src 'none'; form-action 'none'; object-src 'none'; style-src 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="canonical" href="https://mailroom.jacobkieser.me/privacy.html" />
+    <meta name="description" content="Mailroom by Jacob Kieser privacy policy." />
+    <title>Privacy | Mailroom by Jacob Kieser</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="logo" href="./">Mailroom</a>
+      <a class="nav-link" href="./terms.html">Terms</a>
+    </nav>
+
+    <main class="legal-page">
+      <p class="hero-label">Mailroom by Jacob Kieser</p>
+      <h1>Privacy</h1>
+      <p class="legal-intro">
+        Mailroom runs locally and does not store Gmail data on a hosted Mailroom server.
+      </p>
+      <p class="updated">Last updated July 31, 2026</p>
+
+      <div class="legal-grid">
+        <section class="card">
+          <h2>Google Limited Use</h2>
+          <p>
+            Mailroom's use and transfer of information received from Google APIs
+            follows the
+            <a href="https://developers.google.com/terms/api-services-user-data-policy"
+              >Google API Services User Data Policy</a
+            >, including its Limited Use requirements.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Data storage</h2>
+          <p>
+            Mailroom has no hosted backend or email database. It does not use
+            ads, analytics, or telemetry, and it does not sell Gmail data.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>What it can access</h2>
+          <p>
+            Mailroom can search and read messages, manage labels, create and
+            update drafts, send and forward email, archive, and move messages
+            to Trash. It reads each account address to route results to the
+            correct inbox.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Agent access</h2>
+          <p>
+            When you ask Codex, Claude, or another MCP client to work with an
+            email, the email needed for that request goes to the selected
+            client. Its privacy terms and settings apply. Use Mailroom only
+            with a client, account, and workspace configuration that does not
+            use submitted content to train generalized AI or ML models. For a
+            personal OpenAI account, turn off “Improve the model for everyone.”
+            For a personal Anthropic account, do not opt in to model
+            improvement. Mailroom itself does not use Gmail data for ads,
+            profiling, sale, or AI model training.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Data sharing, transfer, and disclosure</h2>
+          <p>
+            Mailroom does not share, transfer, or disclose Google user data to
+            Jacob Kieser, advertisers, data brokers, analytics providers,
+            information resellers, lenders, or other unrelated third parties.
+          </p>
+          <p>
+            At your direction, Mailroom transfers only the data needed for a
+            requested user-facing feature: between your Mac and Google; to the
+            MCP or AI client you selected, such as OpenAI Codex or Anthropic
+            Claude Code, so it can perform your request; and to email recipients
+            you explicitly select when you ask Mailroom to send or forward a
+            message. Those providers and recipients receive only the data needed
+            for that action and process it under their own privacy terms.
+            Mailroom never transfers Google user data for advertising, sale,
+            profiling, credit or lending decisions, or training generalized AI
+            or ML models. You are responsible for confirming that your selected
+            client's current data controls preserve that restriction.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Local storage</h2>
+          <p>
+            The Mailroom Google app ID ships with the plugin. It cannot access
+            your account by itself. Your OAuth tokens go in macOS Keychain.
+            Account names and non-secret config stay in a local file readable
+            only by your macOS user. Requested email can still exist in your
+            local agent session while a task runs.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Data protection</h2>
+          <p>
+            Gmail data is sent directly between your Mac and Google over HTTPS.
+            Mailroom processes requested messages and attachments locally and
+            does not write them to a hosted database, analytics service, or
+            application log. OAuth tokens are encrypted at rest by macOS
+            Keychain and protected by its operating-system access controls.
+            Mailroom never returns tokens to the MCP client.
+          </p>
+          <p>
+            Remote images and tracking resources in email are not loaded.
+            Attachments are size-capped, type-checked, hashed, and never
+            executed. Errors are redacted, and every message, thread, draft,
+            and label identifier is tied to its source account to prevent
+            cross-account access. Gmail changes require an explicit user
+            request and deletion means recoverable Gmail Trash, never
+            permanent deletion.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Retention</h2>
+          <p>
+            Mailroom keeps no independent copy of Gmail content after a request
+            finishes. Content returned to Codex, Claude, or another MCP client
+            may remain in that client's local or hosted task history according
+            to the provider settings you choose. Messages, drafts, labels, and
+            Trash items created in Gmail remain there until you change or
+            remove them in Gmail.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Delete your data</h2>
+          <p>
+            Run <code>./setup --uninstall</code> to remove the plugin and choose
+            whether to revoke its tokens, or disconnect one account with
+            <code>./mailroom auth remove &lt;alias&gt;</code>. You can also revoke
+            Mailroom from your Google Account security settings. To remove
+            Gmail content retained in an AI client's task or chat history,
+            delete the corresponding task or chat using that client's controls.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <a href="./">Mailroom</a>
+        <nav aria-label="Contact">
+          <a href="mailto:jacobk2112@gmail.com">Questions? Email me</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
