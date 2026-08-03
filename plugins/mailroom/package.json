@@ -33,7 +33,7 @@
     "@googleapis/gmail": "17.0.0",
     "@modelcontextprotocol/sdk": "1.29.0",
     "commander": "15.0.0",
-    "google-auth-library": "10.5.0",
+    "google-auth-library": "11.0.0",
     "html-to-text": "10.0.0",
     "mailparser": "3.9.14",
     "marked": "18.0.6",
